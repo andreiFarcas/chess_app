@@ -16,7 +16,10 @@ data class ChessBoardState (
     val clickedSquare: Pair<Int, Int> = Pair(-1, -1),
 
     // The possible moves for the clicked square
-    val possibleMoves: List<Pair<Int, Int>> = listOf()
+    val possibleMoves: List<Pair<Int, Int>> = listOf(),
+
+    // true = white moves, false = black moves
+    val whiteTurn: Boolean = true
 )
 
 

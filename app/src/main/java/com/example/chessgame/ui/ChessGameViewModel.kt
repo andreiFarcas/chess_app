@@ -1,5 +1,6 @@
 package com.example.chessgame.ui
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.example.chessgame.data.ChessBoardState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,7 +43,7 @@ class ChessGameViewModel : ViewModel() {
             newPiecesState.add(newRow) // Add the row to the newPiecesState
         }
 
-        val newBoardState = ChessBoardState(piecesState = newPiecesState)
+        val newBoardState = ChessBoardState(piecesState = newPiecesState, whiteTurn = !currentBoardState.whiteTurn)
 
         // Update the ChessBoardState with the new board state
         _chessBoardUiState.value = newBoardState
@@ -52,7 +53,7 @@ class ChessGameViewModel : ViewModel() {
         val currentBoardState = _chessBoardUiState.value
         val isSquareClicked = (currentBoardState.clickedSquare == square)
 
-        // If the clicked square is a possible move the currently selected piece there
+        // If the clicked square is a possible move, move the selected piece there
         if(currentBoardState.possibleMoves.contains(square)){
             movePiece(currentBoardState.clickedSquare.first, currentBoardState.clickedSquare.second, square.first, square.second)
             resetClickedSquare()
@@ -106,586 +107,597 @@ class ChessGameViewModel : ViewModel() {
         val newPossibleMoves = when (currentBoardState.piecesState[i][j]) {
             "wP" -> {
                 val possibleMoves = mutableListOf<Pair<Int, Int>>()
-                if (i - 1 >= 0 && currentBoardState.piecesState[i - 1][j] == "")
-                    possibleMoves.add(Pair(i - 1, j))
-                if (i - 1 >= 0 && j - 1 >= 0 && currentBoardState.piecesState[i - 1][j - 1].contains("b"))
-                    possibleMoves.add(Pair(i - 1, j - 1))
-                if (i - 1 >= 0 && j + 1 < 8 && currentBoardState.piecesState[i - 1][j + 1].contains("b"))
-                    possibleMoves.add(Pair(i - 1, j + 1))
-                if (i == 6 && currentBoardState.piecesState[i - 2][j] == "")
-                    possibleMoves.add(Pair(i - 2, j))
+                if(currentBoardState.whiteTurn){
+                    if (i - 1 >= 0 && currentBoardState.piecesState[i - 1][j] == "")
+                        possibleMoves.add(Pair(i - 1, j))
+                    if (i - 1 >= 0 && j - 1 >= 0 && currentBoardState.piecesState[i - 1][j - 1].contains("b"))
+                        possibleMoves.add(Pair(i - 1, j - 1))
+                    if (i - 1 >= 0 && j + 1 < 8 && currentBoardState.piecesState[i - 1][j + 1].contains("b"))
+                        possibleMoves.add(Pair(i - 1, j + 1))
+                    if (i == 6 && currentBoardState.piecesState[i - 2][j] == "")
+                        possibleMoves.add(Pair(i - 2, j))
+                }
                 possibleMoves
             }
 
             "bP" -> {
                 val possibleMoves = mutableListOf<Pair<Int, Int>>()
-                if (i + 1 < 8 && currentBoardState.piecesState[i + 1][j] == "")
-                    possibleMoves.add(Pair(i + 1, j))
-                if (i + 1 < 8 && j - 1 >= 0 && currentBoardState.piecesState[i + 1][j - 1].contains("w"))
-                    possibleMoves.add(Pair(i + 1, j - 1))
-                if (i + 1 < 8 && j + 1 < 8 && currentBoardState.piecesState[i + 1][j + 1].contains("w"))
-                    possibleMoves.add(Pair(i + 1, j + 1))
-                if (i == 1 && currentBoardState.piecesState[i + 2][j] == "")
-                    possibleMoves.add(Pair(i + 2, j))
+                if(!currentBoardState.whiteTurn){
+                    if (i + 1 < 8 && currentBoardState.piecesState[i + 1][j] == "")
+                        possibleMoves.add(Pair(i + 1, j))
+                    if (i + 1 < 8 && j - 1 >= 0 && currentBoardState.piecesState[i + 1][j - 1].contains("w"))
+                        possibleMoves.add(Pair(i + 1, j - 1))
+                    if (i + 1 < 8 && j + 1 < 8 && currentBoardState.piecesState[i + 1][j + 1].contains("w"))
+                        possibleMoves.add(Pair(i + 1, j + 1))
+                    if (i == 1 && currentBoardState.piecesState[i + 2][j] == "")
+                        possibleMoves.add(Pair(i + 2, j))
+                }
                 possibleMoves
             }
 
             "wN" -> {
                 val possibleMoves = mutableListOf<Pair<Int, Int>>()
-                if (i + 1 < 8 && j + 2 < 8 && (currentBoardState.piecesState[i + 1][j + 2] == "" || currentBoardState.piecesState[i + 1][j + 2].contains(
-                        "b"
-                    ))
-                )
-                    possibleMoves.add(Pair(i + 1, j + 2))
-                if (i + 1 < 8 && j - 2 >= 0 && (currentBoardState.piecesState[i + 1][j - 2] == "" || currentBoardState.piecesState[i + 1][j - 2].contains(
-                        "b"
-                    ))
-                )
-                    possibleMoves.add(Pair(i + 1, j - 2))
-                if (i - 1 >= 0 && j + 2 < 8 && (currentBoardState.piecesState[i - 1][j + 2] == "" || currentBoardState.piecesState[i - 1][j + 2].contains(
-                        "b"
-                    ))
-                )
-                    possibleMoves.add(Pair(i - 1, j + 2))
-                if (i - 1 >= 0 && j - 2 >= 0 && (currentBoardState.piecesState[i - 1][j - 2] == "" || currentBoardState.piecesState[i - 1][j - 2].contains(
-                        "b"
-                    ))
-                )
-                    possibleMoves.add(Pair(i - 1, j - 2))
-                if (i + 2 < 8 && j + 1 < 8 && (currentBoardState.piecesState[i + 2][j + 1] == "" || currentBoardState.piecesState[i + 2][j + 1].contains(
-                        "b"
-                    ))
-                )
-                    possibleMoves.add(Pair(i + 2, j + 1))
-                if (i + 2 < 8 && j - 1 >= 0 && (currentBoardState.piecesState[i + 2][j - 1] == "" || currentBoardState.piecesState[i + 2][j - 1].contains(
-                        "b"
-                    ))
-                )
-                    possibleMoves.add(Pair(i + 2, j - 1))
-                if (i - 2 >= 0 && j + 1 < 8 && (currentBoardState.piecesState[i - 2][j + 1] == "" || currentBoardState.piecesState[i - 2][j + 1].contains(
-                        "b"
-                    ))
-                )
-                    possibleMoves.add(Pair(i - 2, j + 1))
-                if (i - 2 >= 0 && j - 1 >= 0 && (currentBoardState.piecesState[i - 2][j - 1] == "" || currentBoardState.piecesState[i - 2][j - 1].contains(
-                        "b"
-                    ))
-                )
-                    possibleMoves.add(Pair(i - 2, j - 1))
+                if(currentBoardState.whiteTurn){
+                    if (i + 1 < 8 && j + 2 < 8 && (currentBoardState.piecesState[i + 1][j + 2] == "" || currentBoardState.piecesState[i + 1][j + 2].contains(
+                            "b"
+                        ))
+                    )
+                        possibleMoves.add(Pair(i + 1, j + 2))
+                    if (i + 1 < 8 && j - 2 >= 0 && (currentBoardState.piecesState[i + 1][j - 2] == "" || currentBoardState.piecesState[i + 1][j - 2].contains(
+                            "b"
+                        ))
+                    )
+                        possibleMoves.add(Pair(i + 1, j - 2))
+                    if (i - 1 >= 0 && j + 2 < 8 && (currentBoardState.piecesState[i - 1][j + 2] == "" || currentBoardState.piecesState[i - 1][j + 2].contains(
+                            "b"
+                        ))
+                    )
+                        possibleMoves.add(Pair(i - 1, j + 2))
+                    if (i - 1 >= 0 && j - 2 >= 0 && (currentBoardState.piecesState[i - 1][j - 2] == "" || currentBoardState.piecesState[i - 1][j - 2].contains(
+                            "b"
+                        ))
+                    )
+                        possibleMoves.add(Pair(i - 1, j - 2))
+                    if (i + 2 < 8 && j + 1 < 8 && (currentBoardState.piecesState[i + 2][j + 1] == "" || currentBoardState.piecesState[i + 2][j + 1].contains(
+                            "b"
+                        ))
+                    )
+                        possibleMoves.add(Pair(i + 2, j + 1))
+                    if (i + 2 < 8 && j - 1 >= 0 && (currentBoardState.piecesState[i + 2][j - 1] == "" || currentBoardState.piecesState[i + 2][j - 1].contains(
+                            "b"
+                        ))
+                    )
+                        possibleMoves.add(Pair(i + 2, j - 1))
+                    if (i - 2 >= 0 && j + 1 < 8 && (currentBoardState.piecesState[i - 2][j + 1] == "" || currentBoardState.piecesState[i - 2][j + 1].contains(
+                            "b"
+                        ))
+                    )
+                        possibleMoves.add(Pair(i - 2, j + 1))
+                    if (i - 2 >= 0 && j - 1 >= 0 && (currentBoardState.piecesState[i - 2][j - 1] == "" || currentBoardState.piecesState[i - 2][j - 1].contains(
+                            "b"
+                        ))
+                    )
+                        possibleMoves.add(Pair(i - 2, j - 1))
+                }
                 possibleMoves
             }
 
             "bN" -> {
                 val possibleMoves = mutableListOf<Pair<Int, Int>>()
-                if (i + 1 < 8 && j + 2 < 8 && (currentBoardState.piecesState[i + 1][j + 2] == "" || currentBoardState.piecesState[i + 1][j + 2].contains(
-                        "w"
-                    ))
-                )
-                    possibleMoves.add(Pair(i + 1, j + 2))
-                if (i + 1 < 8 && j - 2 >= 0 && (currentBoardState.piecesState[i + 1][j - 2] == "" || currentBoardState.piecesState[i + 1][j - 2].contains(
-                        "w"
-                    ))
-                )
-                    possibleMoves.add(Pair(i + 1, j - 2))
-                if (i - 1 >= 0 && j + 2 < 8 && (currentBoardState.piecesState[i - 1][j + 2] == "" || currentBoardState.piecesState[i - 1][j + 2].contains(
-                        "w"
-                    ))
-                )
-                    possibleMoves.add(Pair(i - 1, j + 2))
-                if (i - 1 >= 0 && j - 2 >= 0 && (currentBoardState.piecesState[i - 1][j - 2] == "" || currentBoardState.piecesState[i - 1][j - 2].contains(
-                        "w"
-                    ))
-                )
-                    possibleMoves.add(Pair(i - 1, j - 2))
-                if (i + 2 < 8 && j + 1 < 8 && (currentBoardState.piecesState[i + 2][j + 1] == "" || currentBoardState.piecesState[i + 2][j + 1].contains(
-                        "w"
-                    ))
-                )
-                    possibleMoves.add(Pair(i + 2, j + 1))
-                if (i + 2 < 8 && j - 1 >= 0 && (currentBoardState.piecesState[i + 2][j - 1] == "" || currentBoardState.piecesState[i + 2][j - 1].contains(
-                        "w"
-                    ))
-                )
-                    possibleMoves.add(Pair(i + 2, j - 1))
-                if (i - 2 >= 0 && j + 1 < 8 && (currentBoardState.piecesState[i - 2][j + 1] == "" || currentBoardState.piecesState[i - 2][j + 1].contains(
-                        "w"
-                    ))
-                )
-                    possibleMoves.add(Pair(i - 2, j + 1))
-                if (i - 2 >= 0 && j - 1 >= 0 && (currentBoardState.piecesState[i - 2][j - 1] == "" || currentBoardState.piecesState[i - 2][j - 1].contains(
-                        "w"
-                    ))
-                )
-                    possibleMoves.add(Pair(i - 2, j - 1))
+                if(!currentBoardState.whiteTurn){
+                    if (i + 1 < 8 && j + 2 < 8 && (currentBoardState.piecesState[i + 1][j + 2] == "" || currentBoardState.piecesState[i + 1][j + 2].contains(
+                            "w"
+                        ))
+                    )
+                        possibleMoves.add(Pair(i + 1, j + 2))
+                    if (i + 1 < 8 && j - 2 >= 0 && (currentBoardState.piecesState[i + 1][j - 2] == "" || currentBoardState.piecesState[i + 1][j - 2].contains(
+                            "w"
+                        ))
+                    )
+                        possibleMoves.add(Pair(i + 1, j - 2))
+                    if (i - 1 >= 0 && j + 2 < 8 && (currentBoardState.piecesState[i - 1][j + 2] == "" || currentBoardState.piecesState[i - 1][j + 2].contains(
+                            "w"
+                        ))
+                    )
+                        possibleMoves.add(Pair(i - 1, j + 2))
+                    if (i - 1 >= 0 && j - 2 >= 0 && (currentBoardState.piecesState[i - 1][j - 2] == "" || currentBoardState.piecesState[i - 1][j - 2].contains(
+                            "w"
+                        ))
+                    )
+                        possibleMoves.add(Pair(i - 1, j - 2))
+                    if (i + 2 < 8 && j + 1 < 8 && (currentBoardState.piecesState[i + 2][j + 1] == "" || currentBoardState.piecesState[i + 2][j + 1].contains(
+                            "w"
+                        ))
+                    )
+                        possibleMoves.add(Pair(i + 2, j + 1))
+                    if (i + 2 < 8 && j - 1 >= 0 && (currentBoardState.piecesState[i + 2][j - 1] == "" || currentBoardState.piecesState[i + 2][j - 1].contains(
+                            "w"
+                        ))
+                    )
+                        possibleMoves.add(Pair(i + 2, j - 1))
+                    if (i - 2 >= 0 && j + 1 < 8 && (currentBoardState.piecesState[i - 2][j + 1] == "" || currentBoardState.piecesState[i - 2][j + 1].contains(
+                            "w"
+                        ))
+                    )
+                        possibleMoves.add(Pair(i - 2, j + 1))
+                    if (i - 2 >= 0 && j - 1 >= 0 && (currentBoardState.piecesState[i - 2][j - 1] == "" || currentBoardState.piecesState[i - 2][j - 1].contains(
+                            "w"
+                        ))
+                    )
+                        possibleMoves.add(Pair(i - 2, j - 1))
+                }
                 possibleMoves
             }
 
             "wB" -> {
                 val possibleMoves = mutableListOf<Pair<Int, Int>>()
-                // Diagonal movements (top-left to bottom-right)
-                var row = i - 1
-                var col = j - 1
-                while (row >= 0 && col >= 0 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
-                        "b"
-                    ))
-                ) {
-                    possibleMoves.add(Pair(row, col))
-                    if (currentBoardState.piecesState[row][col].contains("b")) break
-                    row--
-                    col--
-                }
-                // Diagonal movements (top-right to bottom-left)
-                row = i - 1
-                col = j + 1
-                while (row >= 0 && col < 8 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
-                        "b"
-                    ))
-                ) {
-                    possibleMoves.add(Pair(row, col))
-                    if (currentBoardState.piecesState[row][col].contains("b")) break
-                    row--
-                    col++
-                }
-                // Diagonal movements (bottom-left to top-right)
-                row = i + 1
-                col = j - 1
-                while (row < 8 && col >= 0 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
-                        "b"
-                    ))
-                ) {
-                    possibleMoves.add(Pair(row, col))
-                    if (currentBoardState.piecesState[row][col].contains("b")) break
-                    row++
-                    col--
-                }
-                // Diagonal movements (bottom-right to top-left)
-                row = i + 1
-                col = j + 1
-                while (row < 8 && col < 8 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
-                        "b"
-                    ))
-                ) {
-                    possibleMoves.add(Pair(row, col))
-                    if (currentBoardState.piecesState[row][col].contains("b")) break
-                    row++
-                    col++
+                if(currentBoardState.whiteTurn){
+                    // Diagonal movements (top-left to bottom-right)
+                    var row = i - 1
+                    var col = j - 1
+                    while (row >= 0 && col >= 0 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
+                            "b"
+                        ))
+                    ) {
+                        possibleMoves.add(Pair(row, col))
+                        if (currentBoardState.piecesState[row][col].contains("b")) break
+                        row--
+                        col--
+                    }
+                    // Diagonal movements (top-right to bottom-left)
+                    row = i - 1
+                    col = j + 1
+                    while (row >= 0 && col < 8 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
+                            "b"
+                        ))
+                    ) {
+                        possibleMoves.add(Pair(row, col))
+                        if (currentBoardState.piecesState[row][col].contains("b")) break
+                        row--
+                        col++
+                    }
+                    // Diagonal movements (bottom-left to top-right)
+                    row = i + 1
+                    col = j - 1
+                    while (row < 8 && col >= 0 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
+                            "b"
+                        ))
+                    ) {
+                        possibleMoves.add(Pair(row, col))
+                        if (currentBoardState.piecesState[row][col].contains("b")) break
+                        row++
+                        col--
+                    }
+                    // Diagonal movements (bottom-right to top-left)
+                    row = i + 1
+                    col = j + 1
+                    while (row < 8 && col < 8 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
+                            "b"
+                        ))
+                    ) {
+                        possibleMoves.add(Pair(row, col))
+                        if (currentBoardState.piecesState[row][col].contains("b")) break
+                        row++
+                        col++
+                    }
                 }
                 possibleMoves
             }
 
             "bB" -> {
                 val possibleMoves = mutableListOf<Pair<Int, Int>>()
+                if(!currentBoardState.whiteTurn){
+                    // Diagonal movements (top-left to bottom-right)
+                    var row = i - 1
+                    var col = j - 1
+                    while (row >= 0 && col >= 0 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
+                            "w"
+                        ))
+                    ) {
+                        possibleMoves.add(Pair(row, col))
+                        if (currentBoardState.piecesState[row][col].contains("w")) break
+                        row--
+                        col--
+                    }
 
-                // Diagonal movements (top-left to bottom-right)
-                var row = i - 1
-                var col = j - 1
-                while (row >= 0 && col >= 0 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
-                        "w"
-                    ))
-                ) {
-                    possibleMoves.add(Pair(row, col))
-                    if (currentBoardState.piecesState[row][col].contains("w")) break
-                    row--
-                    col--
+                    // Diagonal movements (top-right to bottom-left)
+                    row = i - 1
+                    col = j + 1
+                    while (row >= 0 && col < 8 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
+                            "w"
+                        ))
+                    ) {
+                        possibleMoves.add(Pair(row, col))
+                        if (currentBoardState.piecesState[row][col].contains("w")) break
+                        row--
+                        col++
+                    }
+
+                    // Diagonal movements (bottom-left to top-right)
+                    row = i + 1
+                    col = j - 1
+                    while (row < 8 && col >= 0 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
+                            "w"
+                        ))
+                    ) {
+                        possibleMoves.add(Pair(row, col))
+                        if (currentBoardState.piecesState[row][col].contains("w")) break
+                        row++
+                        col--
+                    }
+
+                    // Diagonal movements (bottom-right to top-left)
+                    row = i + 1
+                    col = j + 1
+                    while (row < 8 && col < 8 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
+                            "w"
+                        ))
+                    ) {
+                        possibleMoves.add(Pair(row, col))
+                        if (currentBoardState.piecesState[row][col].contains("w")) break
+                        row++
+                        col++
+                    }
                 }
-
-                // Diagonal movements (top-right to bottom-left)
-                row = i - 1
-                col = j + 1
-                while (row >= 0 && col < 8 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
-                        "w"
-                    ))
-                ) {
-                    possibleMoves.add(Pair(row, col))
-                    if (currentBoardState.piecesState[row][col].contains("w")) break
-                    row--
-                    col++
-                }
-
-                // Diagonal movements (bottom-left to top-right)
-                row = i + 1
-                col = j - 1
-                while (row < 8 && col >= 0 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
-                        "w"
-                    ))
-                ) {
-                    possibleMoves.add(Pair(row, col))
-                    if (currentBoardState.piecesState[row][col].contains("w")) break
-                    row++
-                    col--
-                }
-
-                // Diagonal movements (bottom-right to top-left)
-                row = i + 1
-                col = j + 1
-                while (row < 8 && col < 8 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
-                        "w"
-                    ))
-                ) {
-                    possibleMoves.add(Pair(row, col))
-                    if (currentBoardState.piecesState[row][col].contains("w")) break
-                    row++
-                    col++
-                }
-
                 possibleMoves
             }
 
             "wQ" -> {
                 val possibleMoves = mutableListOf<Pair<Int, Int>>()
-                // Horizontal movements (left)
-                for (col in j - 1 downTo 0) {
-                    if (currentBoardState.piecesState[i][col] == "") {
-                        possibleMoves.add(Pair(i, col))
-                    } else if (currentBoardState.piecesState[i][col].contains("b")) {
-                        possibleMoves.add(Pair(i, col))
-                        break
-                    } else {
-                        break
+                if(currentBoardState.whiteTurn){
+                    // Horizontal movements (left)
+                    for (col in j - 1 downTo 0) {
+                        if (currentBoardState.piecesState[i][col] == "") {
+                            possibleMoves.add(Pair(i, col))
+                        } else if (currentBoardState.piecesState[i][col].contains("b")) {
+                            possibleMoves.add(Pair(i, col))
+                            break
+                        } else {
+                            break
+                        }
+                    }
+                    // Horizontal movements (right)
+                    for (col in j + 1 until 8) {
+                        if (currentBoardState.piecesState[i][col] == "") {
+                            possibleMoves.add(Pair(i, col))
+                        } else if (currentBoardState.piecesState[i][col].contains("b")) {
+                            possibleMoves.add(Pair(i, col))
+                            break
+                        } else {
+                            break
+                        }
+                    }
+                    // Vertical movements (up)
+                    for (row in i - 1 downTo 0) {
+                        if (currentBoardState.piecesState[row][j] == "") {
+                            possibleMoves.add(Pair(row, j))
+                        } else if (currentBoardState.piecesState[row][j].contains("b")) {
+                            possibleMoves.add(Pair(row, j))
+                            break
+                        } else {
+                            break
+                        }
+                    }
+
+                    // Vertical movements (down)
+                    for (row in i + 1 until 8) {
+                        if (currentBoardState.piecesState[row][j] == "") {
+                            possibleMoves.add(Pair(row, j))
+                        } else if (currentBoardState.piecesState[row][j].contains("b")) {
+                            possibleMoves.add(Pair(row, j))
+                            break
+                        } else {
+                            break
+                        }
+                    }
+
+                    // Diagonal movements (top-left to bottom-right)
+                    var row = i - 1
+                    var col = j - 1
+                    while (row >= 0 && col >= 0 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
+                            "b"
+                        ))
+                    ) {
+                        possibleMoves.add(Pair(row, col))
+                        if (currentBoardState.piecesState[row][col].contains("b")) break
+                        row--
+                        col--
+                    }
+
+                    // Diagonal movements (top-right to bottom-left)
+                    row = i - 1
+                    col = j + 1
+                    while (row >= 0 && col < 8 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
+                            "b"
+                        ))
+                    ) {
+                        possibleMoves.add(Pair(row, col))
+                        if (currentBoardState.piecesState[row][col].contains("b")) break
+                        row--
+                        col++
+                    }
+
+                    // Diagonal movements (bottom-left to top-right)
+                    row = i + 1
+                    col = j - 1
+                    while (row < 8 && col >= 0 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
+                            "b"
+                        ))
+                    ) {
+                        possibleMoves.add(Pair(row, col))
+                        if (currentBoardState.piecesState[row][col].contains("b")) break
+                        row++
+                        col--
+                    }
+
+                    // Diagonal movements (bottom-right to top-left)
+                    row = i + 1
+                    col = j + 1
+                    while (row < 8 && col < 8 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
+                            "b"
+                        ))
+                    ) {
+                        possibleMoves.add(Pair(row, col))
+                        if (currentBoardState.piecesState[row][col].contains("b")) break
+                        row++
+                        col++
                     }
                 }
-                // Horizontal movements (right)
-                for (col in j + 1 until 8) {
-                    if (currentBoardState.piecesState[i][col] == "") {
-                        possibleMoves.add(Pair(i, col))
-                    } else if (currentBoardState.piecesState[i][col].contains("b")) {
-                        possibleMoves.add(Pair(i, col))
-                        break
-                    } else {
-                        break
-                    }
-                }
-                // Vertical movements (up)
-                for (row in i - 1 downTo 0) {
-                    if (currentBoardState.piecesState[row][j] == "") {
-                        possibleMoves.add(Pair(row, j))
-                    } else if (currentBoardState.piecesState[row][j].contains("b")) {
-                        possibleMoves.add(Pair(row, j))
-                        break
-                    } else {
-                        break
-                    }
-                }
-
-                // Vertical movements (down)
-                for (row in i + 1 until 8) {
-                    if (currentBoardState.piecesState[row][j] == "") {
-                        possibleMoves.add(Pair(row, j))
-                    } else if (currentBoardState.piecesState[row][j].contains("b")) {
-                        possibleMoves.add(Pair(row, j))
-                        break
-                    } else {
-                        break
-                    }
-                }
-
-                // Diagonal movements (top-left to bottom-right)
-                var row = i - 1
-                var col = j - 1
-                while (row >= 0 && col >= 0 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
-                        "b"
-                    ))
-                ) {
-                    possibleMoves.add(Pair(row, col))
-                    if (currentBoardState.piecesState[row][col].contains("b")) break
-                    row--
-                    col--
-                }
-
-                // Diagonal movements (top-right to bottom-left)
-                row = i - 1
-                col = j + 1
-                while (row >= 0 && col < 8 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
-                        "b"
-                    ))
-                ) {
-                    possibleMoves.add(Pair(row, col))
-                    if (currentBoardState.piecesState[row][col].contains("b")) break
-                    row--
-                    col++
-                }
-
-                // Diagonal movements (bottom-left to top-right)
-                row = i + 1
-                col = j - 1
-                while (row < 8 && col >= 0 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
-                        "b"
-                    ))
-                ) {
-                    possibleMoves.add(Pair(row, col))
-                    if (currentBoardState.piecesState[row][col].contains("b")) break
-                    row++
-                    col--
-                }
-
-                // Diagonal movements (bottom-right to top-left)
-                row = i + 1
-                col = j + 1
-                while (row < 8 && col < 8 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
-                        "b"
-                    ))
-                ) {
-                    possibleMoves.add(Pair(row, col))
-                    if (currentBoardState.piecesState[row][col].contains("b")) break
-                    row++
-                    col++
-                }
-
                 possibleMoves
             }
 
             "bQ" -> {
                 val possibleMoves = mutableListOf<Pair<Int, Int>>()
+                if(!currentBoardState.whiteTurn) {
+                    // Horizontal movements (left)
+                    for (col in j - 1 downTo 0) {
+                        if (currentBoardState.piecesState[i][col] == "") {
+                            possibleMoves.add(Pair(i, col))
+                        } else if (currentBoardState.piecesState[i][col].contains("w")) {
+                            possibleMoves.add(Pair(i, col))
+                            break
+                        } else {
+                            break
+                        }
+                    }
 
-                // Horizontal movements (left)
-                for (col in j - 1 downTo 0) {
-                    if (currentBoardState.piecesState[i][col] == "") {
-                        possibleMoves.add(Pair(i, col))
-                    } else if (currentBoardState.piecesState[i][col].contains("w")) {
-                        possibleMoves.add(Pair(i, col))
-                        break
-                    } else {
-                        break
+                    // Horizontal movements (right)
+                    for (col in j + 1 until 8) {
+                        if (currentBoardState.piecesState[i][col] == "") {
+                            possibleMoves.add(Pair(i, col))
+                        } else if (currentBoardState.piecesState[i][col].contains("w")) {
+                            possibleMoves.add(Pair(i, col))
+                            break
+                        } else {
+                            break
+                        }
+                    }
+
+                    // Vertical movements (up)
+                    for (row in i - 1 downTo 0) {
+                        if (currentBoardState.piecesState[row][j] == "") {
+                            possibleMoves.add(Pair(row, j))
+                        } else if (currentBoardState.piecesState[row][j].contains("w")) {
+                            possibleMoves.add(Pair(row, j))
+                            break
+                        } else {
+                            break
+                        }
+                    }
+
+                    // Vertical movements (down)
+                    for (row in i + 1 until 8) {
+                        if (currentBoardState.piecesState[row][j] == "") {
+                            possibleMoves.add(Pair(row, j))
+                        } else if (currentBoardState.piecesState[row][j].contains("w")) {
+                            possibleMoves.add(Pair(row, j))
+                            break
+                        } else {
+                            break
+                        }
+                    }
+
+                    // Diagonal movements (top-left to bottom-right)
+                    var row = i - 1
+                    var col = j - 1
+                    while (row >= 0 && col >= 0 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
+                            "w"
+                        ))
+                    ) {
+                        possibleMoves.add(Pair(row, col))
+                        if (currentBoardState.piecesState[row][col].contains("w")) break
+                        row--
+                        col--
+                    }
+
+                    // Diagonal movements (top-right to bottom-left)
+                    row = i - 1
+                    col = j + 1
+                    while (row >= 0 && col < 8 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
+                            "w"
+                        ))
+                    ) {
+                        possibleMoves.add(Pair(row, col))
+                        if (currentBoardState.piecesState[row][col].contains("w")) break
+                        row--
+                        col++
+                    }
+
+                    // Diagonal movements (bottom-left to top-right)
+                    row = i + 1
+                    col = j - 1
+                    while (row < 8 && col >= 0 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
+                            "w"
+                        ))
+                    ) {
+                        possibleMoves.add(Pair(row, col))
+                        if (currentBoardState.piecesState[row][col].contains("w")) break
+                        row++
+                        col--
+                    }
+
+                    // Diagonal movements (bottom-right to top-left)
+                    row = i + 1
+                    col = j + 1
+                    while (row < 8 && col < 8 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
+                            "w"
+                        ))
+                    ) {
+                        possibleMoves.add(Pair(row, col))
+                        if (currentBoardState.piecesState[row][col].contains("w")) break
+                        row++
+                        col++
                     }
                 }
-
-                // Horizontal movements (right)
-                for (col in j + 1 until 8) {
-                    if (currentBoardState.piecesState[i][col] == "") {
-                        possibleMoves.add(Pair(i, col))
-                    } else if (currentBoardState.piecesState[i][col].contains("w")) {
-                        possibleMoves.add(Pair(i, col))
-                        break
-                    } else {
-                        break
-                    }
-                }
-
-                // Vertical movements (up)
-                for (row in i - 1 downTo 0) {
-                    if (currentBoardState.piecesState[row][j] == "") {
-                        possibleMoves.add(Pair(row, j))
-                    } else if (currentBoardState.piecesState[row][j].contains("w")) {
-                        possibleMoves.add(Pair(row, j))
-                        break
-                    } else {
-                        break
-                    }
-                }
-
-                // Vertical movements (down)
-                for (row in i + 1 until 8) {
-                    if (currentBoardState.piecesState[row][j] == "") {
-                        possibleMoves.add(Pair(row, j))
-                    } else if (currentBoardState.piecesState[row][j].contains("w")) {
-                        possibleMoves.add(Pair(row, j))
-                        break
-                    } else {
-                        break
-                    }
-                }
-
-                // Diagonal movements (top-left to bottom-right)
-                var row = i - 1
-                var col = j - 1
-                while (row >= 0 && col >= 0 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
-                        "w"
-                    ))
-                ) {
-                    possibleMoves.add(Pair(row, col))
-                    if (currentBoardState.piecesState[row][col].contains("w")) break
-                    row--
-                    col--
-                }
-
-                // Diagonal movements (top-right to bottom-left)
-                row = i - 1
-                col = j + 1
-                while (row >= 0 && col < 8 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
-                        "w"
-                    ))
-                ) {
-                    possibleMoves.add(Pair(row, col))
-                    if (currentBoardState.piecesState[row][col].contains("w")) break
-                    row--
-                    col++
-                }
-
-                // Diagonal movements (bottom-left to top-right)
-                row = i + 1
-                col = j - 1
-                while (row < 8 && col >= 0 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
-                        "w"
-                    ))
-                ) {
-                    possibleMoves.add(Pair(row, col))
-                    if (currentBoardState.piecesState[row][col].contains("w")) break
-                    row++
-                    col--
-                }
-
-                // Diagonal movements (bottom-right to top-left)
-                row = i + 1
-                col = j + 1
-                while (row < 8 && col < 8 && (currentBoardState.piecesState[row][col] == "" || currentBoardState.piecesState[row][col].contains(
-                        "w"
-                    ))
-                ) {
-                    possibleMoves.add(Pair(row, col))
-                    if (currentBoardState.piecesState[row][col].contains("w")) break
-                    row++
-                    col++
-                }
-
                 possibleMoves
             }
 
             "bR" -> {
                 val possibleMoves = mutableListOf<Pair<Int, Int>>()
+                if(!currentBoardState.whiteTurn){
+                    // Horizontal movements (left)
+                    for (col in j - 1 downTo 0) {
+                        if (currentBoardState.piecesState[i][col] == "") {
+                            possibleMoves.add(Pair(i, col))
+                        } else if (currentBoardState.piecesState[i][col].contains("w")) {
+                            possibleMoves.add(Pair(i, col))
+                            break
+                        } else {
+                            break
+                        }
+                    }
 
-                // Horizontal movements (left)
-                for (col in j - 1 downTo 0) {
-                    if (currentBoardState.piecesState[i][col] == "") {
-                        possibleMoves.add(Pair(i, col))
-                    } else if (currentBoardState.piecesState[i][col].contains("w")) {
-                        possibleMoves.add(Pair(i, col))
-                        break
-                    } else {
-                        break
+                    // Horizontal movements (right)
+                    for (col in j + 1 until 8) {
+                        if (currentBoardState.piecesState[i][col] == "") {
+                            possibleMoves.add(Pair(i, col))
+                        } else if (currentBoardState.piecesState[i][col].contains("w")) {
+                            possibleMoves.add(Pair(i, col))
+                            break
+                        } else {
+                            break
+                        }
+                    }
+
+                    // Vertical movements (up)
+                    for (row in i - 1 downTo 0) {
+                        if (currentBoardState.piecesState[row][j] == "") {
+                            possibleMoves.add(Pair(row, j))
+                        } else if (currentBoardState.piecesState[row][j].contains("w")) {
+                            possibleMoves.add(Pair(row, j))
+                            break
+                        } else {
+                            break
+                        }
+                    }
+
+                    // Vertical movements (down)
+                    for (row in i + 1 until 8) {
+                        if (currentBoardState.piecesState[row][j] == "") {
+                            possibleMoves.add(Pair(row, j))
+                        } else if (currentBoardState.piecesState[row][j].contains("w")) {
+                            possibleMoves.add(Pair(row, j))
+                            break
+                        } else {
+                            break
+                        }
                     }
                 }
-
-                // Horizontal movements (right)
-                for (col in j + 1 until 8) {
-                    if (currentBoardState.piecesState[i][col] == "") {
-                        possibleMoves.add(Pair(i, col))
-                    } else if (currentBoardState.piecesState[i][col].contains("w")) {
-                        possibleMoves.add(Pair(i, col))
-                        break
-                    } else {
-                        break
-                    }
-                }
-
-                // Vertical movements (up)
-                for (row in i - 1 downTo 0) {
-                    if (currentBoardState.piecesState[row][j] == "") {
-                        possibleMoves.add(Pair(row, j))
-                    } else if (currentBoardState.piecesState[row][j].contains("w")) {
-                        possibleMoves.add(Pair(row, j))
-                        break
-                    } else {
-                        break
-                    }
-                }
-
-                // Vertical movements (down)
-                for (row in i + 1 until 8) {
-                    if (currentBoardState.piecesState[row][j] == "") {
-                        possibleMoves.add(Pair(row, j))
-                    } else if (currentBoardState.piecesState[row][j].contains("w")) {
-                        possibleMoves.add(Pair(row, j))
-                        break
-                    } else {
-                        break
-                    }
-                }
-
                 possibleMoves
             }
 
             "wR" -> {
                 val possibleMoves = mutableListOf<Pair<Int, Int>>()
+                if(currentBoardState.whiteTurn){
+                    // Horizontal movements (left)
+                    for (col in j - 1 downTo 0) {
+                        if (currentBoardState.piecesState[i][col] == "") {
+                            possibleMoves.add(Pair(i, col))
+                        } else if (currentBoardState.piecesState[i][col].contains("b")) {
+                            possibleMoves.add(Pair(i, col))
+                            break
+                        } else {
+                            break
+                        }
+                    }
 
-                // Horizontal movements (left)
-                for (col in j - 1 downTo 0) {
-                    if (currentBoardState.piecesState[i][col] == "") {
-                        possibleMoves.add(Pair(i, col))
-                    } else if (currentBoardState.piecesState[i][col].contains("b")) {
-                        possibleMoves.add(Pair(i, col))
-                        break
-                    } else {
-                        break
+                    // Horizontal movements (right)
+                    for (col in j + 1 until 8) {
+                        if (currentBoardState.piecesState[i][col] == "") {
+                            possibleMoves.add(Pair(i, col))
+                        } else if (currentBoardState.piecesState[i][col].contains("b")) {
+                            possibleMoves.add(Pair(i, col))
+                            break
+                        } else {
+                            break
+                        }
+                    }
+
+                    // Vertical movements (up)
+                    for (row in i - 1 downTo 0) {
+                        if (currentBoardState.piecesState[row][j] == "") {
+                            possibleMoves.add(Pair(row, j))
+                        } else if (currentBoardState.piecesState[row][j].contains("b")) {
+                            possibleMoves.add(Pair(row, j))
+                            break
+                        } else {
+                            break
+                        }
+                    }
+
+                    // Vertical movements (down)
+                    for (row in i + 1 until 8) {
+                        if (currentBoardState.piecesState[row][j] == "") {
+                            possibleMoves.add(Pair(row, j))
+                        } else if (currentBoardState.piecesState[row][j].contains("b")) {
+                            possibleMoves.add(Pair(row, j))
+                            break
+                        } else {
+                            break
+                        }
                     }
                 }
-
-                // Horizontal movements (right)
-                for (col in j + 1 until 8) {
-                    if (currentBoardState.piecesState[i][col] == "") {
-                        possibleMoves.add(Pair(i, col))
-                    } else if (currentBoardState.piecesState[i][col].contains("b")) {
-                        possibleMoves.add(Pair(i, col))
-                        break
-                    } else {
-                        break
-                    }
-                }
-
-                // Vertical movements (up)
-                for (row in i - 1 downTo 0) {
-                    if (currentBoardState.piecesState[row][j] == "") {
-                        possibleMoves.add(Pair(row, j))
-                    } else if (currentBoardState.piecesState[row][j].contains("b")) {
-                        possibleMoves.add(Pair(row, j))
-                        break
-                    } else {
-                        break
-                    }
-                }
-
-                // Vertical movements (down)
-                for (row in i + 1 until 8) {
-                    if (currentBoardState.piecesState[row][j] == "") {
-                        possibleMoves.add(Pair(row, j))
-                    } else if (currentBoardState.piecesState[row][j].contains("b")) {
-                        possibleMoves.add(Pair(row, j))
-                        break
-                    } else {
-                        break
-                    }
-                }
-
                 possibleMoves
             }
 
             "wK" -> {
                 val possibleMoves = mutableListOf<Pair<Int, Int>>()
+                if(currentBoardState.whiteTurn){
+                    // Check all surrounding squares
+                    for (rowOffset in -1..1) {
+                        for (colOffset in -1..1) {
+                            val newRow = i + rowOffset
+                            val newCol = j + colOffset
 
-                // Check all surrounding squares
-                for (rowOffset in -1..1) {
-                    for (colOffset in -1..1) {
-                        val newRow = i + rowOffset
-                        val newCol = j + colOffset
-
-                        // Check if the new position is within bounds and not occupied by a white piece
-                        if (newRow in 0 until 8 && newCol in 0 until 8 && !currentBoardState.piecesState[newRow][newCol].contains("w")) {
-                            possibleMoves.add(Pair(newRow, newCol))
+                            // Check if the new position is within bounds and not occupied by a white piece
+                            if (newRow in 0 until 8 && newCol in 0 until 8 && !currentBoardState.piecesState[newRow][newCol].contains("w")) {
+                                possibleMoves.add(Pair(newRow, newCol))
+                            }
                         }
                     }
                 }
-
                 possibleMoves
             }
 
             "bK" -> {
                 val possibleMoves = mutableListOf<Pair<Int, Int>>()
+                if(!currentBoardState.whiteTurn){
+                    // Check all surrounding squares
+                    for (rowOffset in -1..1) {
+                        for (colOffset in -1..1) {
+                            val newRow = i + rowOffset
+                            val newCol = j + colOffset
 
-                // Check all surrounding squares
-                for (rowOffset in -1..1) {
-                    for (colOffset in -1..1) {
-                        val newRow = i + rowOffset
-                        val newCol = j + colOffset
-
-                        // Check if the new position is within bounds and not occupied by a black piece
-                        if (newRow in 0 until 8 && newCol in 0 until 8 && !currentBoardState.piecesState[newRow][newCol].contains("b")) {
-                            possibleMoves.add(Pair(newRow, newCol))
+                            // Check if the new position is within bounds and not occupied by a black piece
+                            if (newRow in 0 until 8 && newCol in 0 until 8 && !currentBoardState.piecesState[newRow][newCol].contains("b")) {
+                                possibleMoves.add(Pair(newRow, newCol))
+                            }
                         }
                     }
                 }
-
                 possibleMoves
             }
-            
+
             else -> currentBoardState.possibleMoves
         }
         // Update the board state with added possibleMoves
