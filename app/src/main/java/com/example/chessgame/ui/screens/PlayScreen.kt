@@ -1,0 +1,42 @@
+package com.example.chessgame.ui.screens
+
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel   // Import not suggested by the IDE !!
+import com.example.chessgame.ui.ChessGameViewModel
+import com.example.chessgame.ui.components.ChessBoardUi
+
+
+@Composable
+fun PlayScreen(
+    chessGameViewModel: ChessGameViewModel = viewModel(),
+){
+    val boardState by chessGameViewModel.chessBoardUiState.collectAsState()
+    Column() {
+        Text(
+            text = "Here you will be able to play chess",
+        )
+        ChessBoardUi(
+            piecesState = boardState.piecesState
+        )
+        Button(
+            onClick = { chessGameViewModel.movePiece(0, 1, 2, 0) }
+        ) {
+            Text(text = "Test movePiece()")
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ChessBoardPreview(){
+    PlayScreen()
+}
+
+
