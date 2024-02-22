@@ -11,4 +11,12 @@ data class ChessBoardState (
         listOf("wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"),
         listOf("wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR")
     ),
+
+    // The last square that was clicked
+    val clickedSquare: Pair<Int, Int> = Pair(-1, -1),
+
+    // The possible moves for the clicked square
+    val possibleMoves: List<Pair<Int, Int>> = listOf()
 )
+
+

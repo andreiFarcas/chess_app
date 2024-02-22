@@ -3,6 +3,7 @@ package com.example.chessgame.ui.components
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,18 +13,28 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.chessgame.R
 import com.example.chessgame.data.DataSource
+import com.example.chessgame.ui.ChessGameViewModel
+
 
 // Composable that draws a chessboard, receives an 8x8 list of pieces codes
 @Composable
 fun ChessBoardUi(
-    piecesState: List<List<String>>
+    chessGameViewModel: ChessGameViewModel = viewModel(),
+    piecesState: List<List<String>>,
+    clickedSquare: Pair<Int, Int>,
+    possibleMoves: List<Pair<Int, Int>>
 ){
     Box(modifier = Modifier
         .fillMaxWidth()
@@ -53,9 +64,20 @@ fun ChessBoardUi(
                         // Get the right image for the piece, or 0 if there is no piece
                         val imageResource = DataSource.piecesImages[piece] ?: 0
 
+                        // Boolean that says if current square is clicked or not
+                        val isSquareClicked = (clickedSquare == Pair(i, j))
+
+                        //Boolean that says if current square is possible move or not
+                        val isPossibleMove = possibleMoves.contains(Pair(i, j))
+
                         // We have 8 squares / row
                         ChessSquareUi(
                             imageResource = imageResource,
+                            onClick = {
+                                chessGameViewModel.onClickSquare(Pair(i, j))
+                            },
+                            isPossibleMove = isPossibleMove,
+                            isClicked = isSquareClicked,
                             modifier = Modifier
                                 .weight(1f) // All will have equal sizes in the Row
                                 .fillMaxSize()
@@ -71,16 +93,21 @@ fun ChessBoardUi(
 // Function that draws one chess square
 @Composable
 fun ChessSquareUi(
+    onClick: () -> Unit,
+    isClicked: Boolean,
+    isPossibleMove: Boolean,
     imageResource: Int,
     modifier: Modifier = Modifier
 ){
     Box(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
+            .background(if (isClicked) Color.Yellow else if(isPossibleMove) Color.Blue else Color.Transparent)
+            .clickable {onClick()}
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Transparent)
             //.shadow(1.dp)
         ){
             if(imageResource != 0){
@@ -106,6 +133,8 @@ fun ChessBoardPreview(){
             listOf("", "", "", "", "", "", "", ""),
             listOf("wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"),
             listOf("wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR")
-        )
+        ),
+        clickedSquare = Pair(-1, -1),
+        possibleMoves = listOf()
     )
 }

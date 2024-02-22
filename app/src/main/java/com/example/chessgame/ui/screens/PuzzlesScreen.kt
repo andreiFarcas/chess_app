@@ -18,10 +18,13 @@ fun PuzzlesScreen(
 
     Column {
         Text(
-            text = "here you will be able to train your brain!"
+            text = "Here you will be able to train your brain!"
         )
         ChessBoardUi(
-            piecesState =boardState.piecesState
+            chessGameViewModel =chessGameViewModel,
+            clickedSquare = Pair(-1, -1),
+            piecesState = boardState.piecesState,
+            possibleMoves = boardState.possibleMoves
         )
     }
 }
