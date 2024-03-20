@@ -19,7 +19,11 @@ data class ChessBoardState (
     val possibleMoves: List<Pair<Int, Int>> = listOf(),
 
     // true = white moves, false = black moves
-    val whiteTurn: Boolean = true
+    val whiteTurn: Boolean = true,
+
+    // Boolean keeping track of checks
+    val wKingInCheck: Boolean = false,
+    val bKingInCheck: Boolean = false
 )
 
 

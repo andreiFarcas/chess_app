@@ -37,7 +37,7 @@ fun MenuScreen(
             contentDescription = null,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(36.dp)
+                .padding(dimensionResource(R.dimen.padding_large))
                 .clip(RoundedCornerShape(18.dp)) // Apply rounded corners
         )
 

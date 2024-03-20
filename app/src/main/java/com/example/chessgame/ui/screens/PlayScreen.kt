@@ -3,6 +3,7 @@ package com.example.chessgame.ui.screens
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -30,8 +31,12 @@ fun PlayScreen(
             chessGameViewModel = chessGameViewModel,
             piecesState = boardState.piecesState,
             possibleMoves = boardState.possibleMoves,
-            clickedSquare = boardState.clickedSquare
+            clickedSquare = boardState.clickedSquare,
+            bKingInCheck = boardState.bKingInCheck
         )
+        Button(onClick = {chessGameViewModel.resetBoard()}) {
+            Text(text = "Reset Board")
+        }
     }
 }
 

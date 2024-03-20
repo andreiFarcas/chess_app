@@ -34,7 +34,8 @@ fun ChessBoardUi(
     chessGameViewModel: ChessGameViewModel = viewModel(),
     piecesState: List<List<String>>,
     clickedSquare: Pair<Int, Int>,
-    possibleMoves: List<Pair<Int, Int>>
+    possibleMoves: List<Pair<Int, Int>>,
+    bKingInCheck: Boolean
 ){
     Box(modifier = Modifier
         .fillMaxWidth()
@@ -53,7 +54,7 @@ fun ChessBoardUi(
                     modifier = Modifier.weight(1f) // All rows will take the same size in the Column
                 ) {
                     for(j in 0..7){
-                        val isGreenSquare = (i + j) % 2 == 1 // Based on parity of indexes we color dark or light
+                        val isGreenSquare = (i + j) % 2 == 0 // Based on parity of indexes we color dark or light
                         val squareColor = if(isGreenSquare) Color.Green else Color.Gray
 
                         // We check what piece we have on that square
@@ -67,8 +68,11 @@ fun ChessBoardUi(
                         // Boolean that says if current square is clicked or not
                         val isSquareClicked = (clickedSquare == Pair(i, j))
 
-                        //Boolean that says if current square is possible move or not
+                        // Boolean that says if current square is possible move or not
                         val isPossibleMove = possibleMoves.contains(Pair(i, j))
+
+                        // Booleans that says if current square is a king in check or not
+                        val isKingInCheck = (piece.contains("bK") && bKingInCheck)
 
                         // We have 8 squares / row
                         ChessSquareUi(
@@ -78,6 +82,7 @@ fun ChessBoardUi(
                             },
                             isPossibleMove = isPossibleMove,
                             isClicked = isSquareClicked,
+                            isKingInCheck = isKingInCheck,
                             modifier = Modifier
                                 .weight(1f) // All will have equal sizes in the Row
                                 .fillMaxSize()
@@ -97,12 +102,17 @@ fun ChessSquareUi(
     isClicked: Boolean,
     isPossibleMove: Boolean,
     imageResource: Int,
+    isKingInCheck: Boolean,
     modifier: Modifier = Modifier
 ){
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(if (isClicked) Color.Yellow else if(isPossibleMove) Color.Blue else Color.Transparent)
+            .background(
+                if(isKingInCheck) Color.Red
+                else if (isClicked) Color.Yellow
+                else if(isPossibleMove) Color.Blue
+                else Color.Transparent)
             .clickable {onClick()}
     ) {
         Box(
@@ -135,6 +145,7 @@ fun ChessBoardPreview(){
             listOf("wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR")
         ),
         clickedSquare = Pair(-1, -1),
-        possibleMoves = listOf()
+        possibleMoves = listOf(),
+        bKingInCheck = false,
     )
 }

@@ -24,7 +24,8 @@ fun PuzzlesScreen(
             chessGameViewModel =chessGameViewModel,
             clickedSquare = Pair(-1, -1),
             piecesState = boardState.piecesState,
-            possibleMoves = boardState.possibleMoves
+            possibleMoves = boardState.possibleMoves,
+            bKingInCheck = boardState.bKingInCheck
         )
     }
 }

@@ -8,16 +8,40 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
+//**
 // ChessGameViewModel holds information regarding the pieces on the chessboard
 
 class ChessGameViewModel : ViewModel() {
-    private val _chessBoardUiState = MutableStateFlow(ChessBoardState())  // A matrix of
+    private val _chessBoardUiState = MutableStateFlow(ChessBoardState())
     val chessBoardUiState: StateFlow<ChessBoardState> = _chessBoardUiState.asStateFlow()
 
-    private fun resetBoard(){
+    // Function called whenever user interacts with the board
+    fun onClickSquare(square: Pair<Int, Int>){
+        val currentBoardState = _chessBoardUiState.value
+        val isSquareClicked = (currentBoardState.clickedSquare == square)
+
+        // If the clicked square is a possible move, move the selected piece there
+        if(currentBoardState.possibleMoves.contains(square)){
+            movePiece(currentBoardState.clickedSquare.first, currentBoardState.clickedSquare.second, square.first, square.second)
+            resetClickedSquare()
+            resetPossibleMoves()
+        } else{
+            // If square is not the clicked one then we mark it as clicked
+            if(!isSquareClicked) {
+                markAsClicked(square)
+                resetPossibleMoves() // Remove existing possible moves markings
+            }
+
+            // We for possible moves if we selected a piece
+            if(currentBoardState.piecesState[square.first][square.second] != ""){
+                markPossibleMoves(square, _chessBoardUiState.value, false)
+            }
+        }
+    }
+    // Function that resets board to initial state
+    fun resetBoard(){
         _chessBoardUiState.update { ChessBoardState() }   // TO DO
     }
-
     // Function that moves a piece from starting position to target position
     private fun movePiece(fromRow: Int, fromColumn: Int, toRow: Int, toColumn: Int) {
         val currentBoardState = _chessBoardUiState.value
@@ -43,70 +67,124 @@ class ChessGameViewModel : ViewModel() {
             newPiecesState.add(newRow) // Add the row to the newPiecesState
         }
 
-        val newBoardState = ChessBoardState(piecesState = newPiecesState, whiteTurn = !currentBoardState.whiteTurn)
+        val afterMoveBoardState = ChessBoardState(
+            piecesState = newPiecesState,
+            whiteTurn = currentBoardState.whiteTurn,
+            bKingInCheck = currentBoardState.bKingInCheck
+        )
+
+        var bKingInCheck = false
+        var bKCoordinates = Pair(0, 0)
+        if(afterMoveBoardState.whiteTurn){
+            // Find the black king:
+            for(i in 0..7){
+                for(j in 0..7){
+                    if(afterMoveBoardState.piecesState[i][j].contains("bK")){ // we have found our black king
+                        bKCoordinates = Pair(i, j)
+                    }
+                }
+            }
+
+            // Check if we are checking opposing king after our move
+            for(i in 0..7){
+                for(j in 0..7){
+                    if(afterMoveBoardState.piecesState[i][j].contains("w")) // we have a white piece
+                    {
+                        markPossibleMoves(Pair(i, j), afterMoveBoardState, true) // we mark all possible moves for white pieces
+                        Log.d("CheckCheck", "${afterMoveBoardState.possibleMoves}")
+                        if(afterMoveBoardState.possibleMoves.contains(bKCoordinates)){
+                            // our black king is threatened
+                            bKingInCheck = true
+                            Log.d("CheckCheck", "Black King is checked")
+                        }
+                    }
+                }
+            }
+
+            // Reset possible moves
+            resetPossibleMoves()
+        }
+
+        val newBoardState = ChessBoardState(
+            piecesState = newPiecesState,
+            whiteTurn = !currentBoardState.whiteTurn,
+            bKingInCheck = bKingInCheck
+        )
 
         // Update the ChessBoardState with the new board state
         _chessBoardUiState.value = newBoardState
     }
-
-    fun onClickSquare(square: Pair<Int, Int>){
-        val currentBoardState = _chessBoardUiState.value
-        val isSquareClicked = (currentBoardState.clickedSquare == square)
-
-        // If the clicked square is a possible move, move the selected piece there
-        if(currentBoardState.possibleMoves.contains(square)){
-            movePiece(currentBoardState.clickedSquare.first, currentBoardState.clickedSquare.second, square.first, square.second)
-            resetClickedSquare()
-            resetPossibleMoves()
-        } else{
-            // If square is not the clicked one then we mark it as clicked
-            if(!isSquareClicked) {
-                markAsClicked(square)
-                resetPossibleMoves() // Remove existing possible moves markings
-            }
-
-            // We for possible moves if we selected a piece
-            if(currentBoardState.piecesState[square.first][square.second] != ""){
-                markPossibleMoves(square)
-            }
-        }
-    }
-
     // Function that resets clicked square markings
     private fun resetClickedSquare(){
         _chessBoardUiState.update { currentBoardState ->
             currentBoardState.copy(clickedSquare = Pair(-1, -1))
         }
     }
-
     // Function that resets possible moves markings
     private fun resetPossibleMoves(){
         _chessBoardUiState.update { currentBoardState ->
             currentBoardState.copy(possibleMoves = listOf())
         }
     }
-
     // Function that marks a square as clicked
     private fun markAsClicked(square: Pair<Int, Int>) {
         _chessBoardUiState.update { currentBoardState ->
             currentBoardState.copy(clickedSquare = square)
         }
     }
-
     init{
         resetBoard()
     }
+    // Function that checks if opposing king is in check, right after a move
+    private fun checkForCheck(currentBoardState: ChessBoardState): Boolean{
+        var bKingInCheck = false
+        var bKCoordinates = Pair(0, 0)
+        if(currentBoardState.whiteTurn){
+            // Find the black king:
+            for(i in 0..7){
+                for(j in 0..7){
+                    if(currentBoardState.piecesState[i][j].contains("bK")){ // we have found our black king
+                        bKCoordinates = Pair(i, j)
+                    }
+                }
+            }
 
+            // Check if we are checking opposing king after our move
+            for(i in 0..7){
+                for(j in 0..7){
+                    if(currentBoardState.piecesState[i][j].contains("w")) // we have a white piece
+                    {
+                        markPossibleMoves(Pair(i, j), currentBoardState, true) // we mark all possible moves for white pieces
+                        Log.d("CheckCheck", "${currentBoardState.possibleMoves}")
+                        if(currentBoardState.possibleMoves.contains(bKCoordinates)){
+                            // our black king is threatened
+                            bKingInCheck = true
+                            Log.d("CheckCheck", "Black King is checked")
+                        }
+                    }
+                }
+            }
+
+            // Reset possible moves
+            resetPossibleMoves()
+        }
+        return bKingInCheck
+    }
     // Function that marks all possible moves for a piece
-    private fun markPossibleMoves(selectedSquare: Pair<Int, Int>) {
-        val currentBoardState = _chessBoardUiState.value
+    private fun markPossibleMoves(selectedSquare: Pair<Int, Int>, currentBoardState: ChessBoardState, addOnOldPossibleMoves: Boolean) {
 
         val i = selectedSquare.first
         val j = selectedSquare.second
 
-        val newPossibleMoves = when (currentBoardState.piecesState[i][j]) {
+        // List of possible moves which will be added to the board state
+        val possibleMoves: MutableList<Pair<Int, Int>> = if (addOnOldPossibleMoves) {
+            currentBoardState.possibleMoves.toMutableList()
+        } else {
+            mutableListOf()
+        }
+
+        when (currentBoardState.piecesState[i][j]) {
             "wP" -> {
-                val possibleMoves = mutableListOf<Pair<Int, Int>>()
                 if(currentBoardState.whiteTurn){
                     if (i - 1 >= 0 && currentBoardState.piecesState[i - 1][j] == "")
                         possibleMoves.add(Pair(i - 1, j))
@@ -117,11 +195,9 @@ class ChessGameViewModel : ViewModel() {
                     if (i == 6 && currentBoardState.piecesState[i - 2][j] == "")
                         possibleMoves.add(Pair(i - 2, j))
                 }
-                possibleMoves
             }
 
             "bP" -> {
-                val possibleMoves = mutableListOf<Pair<Int, Int>>()
                 if(!currentBoardState.whiteTurn){
                     if (i + 1 < 8 && currentBoardState.piecesState[i + 1][j] == "")
                         possibleMoves.add(Pair(i + 1, j))
@@ -132,11 +208,9 @@ class ChessGameViewModel : ViewModel() {
                     if (i == 1 && currentBoardState.piecesState[i + 2][j] == "")
                         possibleMoves.add(Pair(i + 2, j))
                 }
-                possibleMoves
             }
 
             "wN" -> {
-                val possibleMoves = mutableListOf<Pair<Int, Int>>()
                 if(currentBoardState.whiteTurn){
                     if (i + 1 < 8 && j + 2 < 8 && (currentBoardState.piecesState[i + 1][j + 2] == "" || currentBoardState.piecesState[i + 1][j + 2].contains(
                             "b"
@@ -179,11 +253,9 @@ class ChessGameViewModel : ViewModel() {
                     )
                         possibleMoves.add(Pair(i - 2, j - 1))
                 }
-                possibleMoves
             }
 
             "bN" -> {
-                val possibleMoves = mutableListOf<Pair<Int, Int>>()
                 if(!currentBoardState.whiteTurn){
                     if (i + 1 < 8 && j + 2 < 8 && (currentBoardState.piecesState[i + 1][j + 2] == "" || currentBoardState.piecesState[i + 1][j + 2].contains(
                             "w"
@@ -226,11 +298,9 @@ class ChessGameViewModel : ViewModel() {
                     )
                         possibleMoves.add(Pair(i - 2, j - 1))
                 }
-                possibleMoves
             }
 
             "wB" -> {
-                val possibleMoves = mutableListOf<Pair<Int, Int>>()
                 if(currentBoardState.whiteTurn){
                     // Diagonal movements (top-left to bottom-right)
                     var row = i - 1
@@ -281,11 +351,9 @@ class ChessGameViewModel : ViewModel() {
                         col++
                     }
                 }
-                possibleMoves
             }
 
             "bB" -> {
-                val possibleMoves = mutableListOf<Pair<Int, Int>>()
                 if(!currentBoardState.whiteTurn){
                     // Diagonal movements (top-left to bottom-right)
                     var row = i - 1
@@ -339,11 +407,9 @@ class ChessGameViewModel : ViewModel() {
                         col++
                     }
                 }
-                possibleMoves
             }
 
             "wQ" -> {
-                val possibleMoves = mutableListOf<Pair<Int, Int>>()
                 if(currentBoardState.whiteTurn){
                     // Horizontal movements (left)
                     for (col in j - 1 downTo 0) {
@@ -443,11 +509,9 @@ class ChessGameViewModel : ViewModel() {
                         col++
                     }
                 }
-                possibleMoves
             }
 
             "bQ" -> {
-                val possibleMoves = mutableListOf<Pair<Int, Int>>()
                 if(!currentBoardState.whiteTurn) {
                     // Horizontal movements (left)
                     for (col in j - 1 downTo 0) {
@@ -549,11 +613,9 @@ class ChessGameViewModel : ViewModel() {
                         col++
                     }
                 }
-                possibleMoves
             }
 
             "bR" -> {
-                val possibleMoves = mutableListOf<Pair<Int, Int>>()
                 if(!currentBoardState.whiteTurn){
                     // Horizontal movements (left)
                     for (col in j - 1 downTo 0) {
@@ -603,11 +665,9 @@ class ChessGameViewModel : ViewModel() {
                         }
                     }
                 }
-                possibleMoves
             }
 
             "wR" -> {
-                val possibleMoves = mutableListOf<Pair<Int, Int>>()
                 if(currentBoardState.whiteTurn){
                     // Horizontal movements (left)
                     for (col in j - 1 downTo 0) {
@@ -657,11 +717,9 @@ class ChessGameViewModel : ViewModel() {
                         }
                     }
                 }
-                possibleMoves
             }
 
             "wK" -> {
-                val possibleMoves = mutableListOf<Pair<Int, Int>>()
                 if(currentBoardState.whiteTurn){
                     // Check all surrounding squares
                     for (rowOffset in -1..1) {
@@ -676,11 +734,9 @@ class ChessGameViewModel : ViewModel() {
                         }
                     }
                 }
-                possibleMoves
             }
 
             "bK" -> {
-                val possibleMoves = mutableListOf<Pair<Int, Int>>()
                 if(!currentBoardState.whiteTurn){
                     // Check all surrounding squares
                     for (rowOffset in -1..1) {
@@ -695,12 +751,11 @@ class ChessGameViewModel : ViewModel() {
                         }
                     }
                 }
-                possibleMoves
             }
 
             else -> currentBoardState.possibleMoves
         }
         // Update the board state with added possibleMoves
-        _chessBoardUiState.update { currentBoardState.copy(possibleMoves = newPossibleMoves) }
+        _chessBoardUiState.update { currentBoardState.copy(possibleMoves = possibleMoves) }
     }
 }
