@@ -23,7 +23,9 @@ data class ChessBoardState (
 
     // Boolean keeping track of checks
     val wKingInCheck: Boolean = false,
-    val bKingInCheck: Boolean = false
+    val bKingInCheck: Boolean = false,
+
+    val moveCounter: Int = 1,
 )
 
 

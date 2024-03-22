@@ -1,7 +1,6 @@
 package com.example.chessgame.ui.screens
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +29,10 @@ fun AboutScreen() {
         )
         Text(
             text = "Steppers: 28byj-48; Drivers: ulm2005",
+            modifier = Modifier.padding(bottom = dimensionResource(id = R.dimen.padding_small))
+        )
+        Text(
+            text = "Chess engine used: Stockfish",
             modifier = Modifier.padding(bottom = dimensionResource(id = R.dimen.padding_small))
         )
     }

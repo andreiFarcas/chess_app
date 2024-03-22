@@ -4,26 +4,30 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import com.example.chessgame.engine.ChessEngine
+import com.example.chessgame.ui.ChessGameViewModel
 import com.example.chessgame.ui.theme.ChessGameTheme
 import java.io.File
 import java.io.FileOutputStream
 
 class MainActivity : ComponentActivity() {
+
+    // Initialise the chess engine in the viewModel
+    private lateinit var viewModel: ChessGameViewModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         copyStockfishToInternalStorage()
 
+        // Create the ChessEngine with applicationContext
+        val chessEngine = ChessEngine(applicationContext)
+
+        // Directly instantiate the ChessGameViewModel
+        viewModel = ChessGameViewModel(chessEngine)
+
         setContent {
             ChessGameTheme {
-                ChessGameApp()
+                ChessGameApp(viewModel)
             }
         }
     }
@@ -51,7 +55,7 @@ class MainActivity : ComponentActivity() {
     private fun chessEngineTest(){
         val chessEngine = ChessEngine(this)
         val fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1\n" // Example FEN, replace with current position
-        val bestMove = chessEngine.getBestMove(fen)
+        val bestMove = chessEngine.getBestMove(fen, 15)
         Log.d("Stockfish", "Best move: $bestMove")
         chessEngine.close()
     }

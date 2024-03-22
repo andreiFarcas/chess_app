@@ -6,6 +6,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.chessgame.ui.ChessGameViewModel
 import com.example.chessgame.ui.screens.AboutScreen
 import com.example.chessgame.ui.screens.MenuScreen
 import com.example.chessgame.ui.screens.PlayScreen
@@ -21,7 +22,8 @@ enum class ChessGameScreen(){
 
 @Composable
 fun ChessGameApp(
-    navController: NavHostController = rememberNavController()
+    chessGameViewModel: ChessGameViewModel,
+    navController: NavHostController = rememberNavController(),
 ){
     NavHost(
         navController = navController,
@@ -35,7 +37,7 @@ fun ChessGameApp(
             )
         }
         composable(route = ChessGameScreen.Play.name){
-            PlayScreen()
+            PlayScreen(chessGameViewModel)
         }
         composable(route = ChessGameScreen.Puzzles.name){
             PuzzlesScreen()

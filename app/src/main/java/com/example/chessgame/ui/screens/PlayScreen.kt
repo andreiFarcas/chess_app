@@ -10,8 +10,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.viewmodel.compose.viewModel   // Import not suggested by the IDE !!
 import com.example.chessgame.R
 import com.example.chessgame.ui.ChessGameViewModel
 import com.example.chessgame.ui.components.ChessBoardUi
@@ -19,10 +17,10 @@ import com.example.chessgame.ui.components.ChessBoardUi
 
 @Composable
 fun PlayScreen(
-    chessGameViewModel: ChessGameViewModel = viewModel(),
+    chessGameViewModel: ChessGameViewModel,
 ){
     val boardState by chessGameViewModel.chessBoardUiState.collectAsState()
-    Column() {
+    Column {
         Text(
             text = "Here you will be able to play chess",
             modifier = Modifier.padding(end = dimensionResource(id = R.dimen.padding_small))
@@ -34,16 +32,14 @@ fun PlayScreen(
             clickedSquare = boardState.clickedSquare,
             bKingInCheck = boardState.bKingInCheck
         )
-        Button(onClick = {chessGameViewModel.resetBoard()}) {
+        Button(onClick = {chessGameViewModel.resetBoard() }) {
             Text(text = "Reset Board")
         }
+        Text(
+            text = chessGameViewModel.testFenInterface()
+        )
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun ChessBoardPreview(){
-    PlayScreen()
-}
 
 

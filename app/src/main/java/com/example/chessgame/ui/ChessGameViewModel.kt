@@ -1,19 +1,32 @@
 package com.example.chessgame.ui
 
+import android.app.Application
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.example.chessgame.data.ChessBoardState
+import com.example.chessgame.engine.ChessEngine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-//**
-// ChessGameViewModel holds information regarding the pieces on the chessboard
+/*
 
-class ChessGameViewModel : ViewModel() {
+ ChessGameViewModel is responsible to react and provide information for and after all UI interactions
+
+ */
+
+class ChessGameViewModel(chessEngine: ChessEngine) : ViewModel() {
+    private val chessEngine = chessEngine
+
     private val _chessBoardUiState = MutableStateFlow(ChessBoardState())
     val chessBoardUiState: StateFlow<ChessBoardState> = _chessBoardUiState.asStateFlow()
+
+    fun testFenInterface(): String {
+        val currentBoardState = _chessBoardUiState.value
+
+        return chessEngine.getFenFromChessBoardState(currentBoardState)
+    }
 
     // Function called whenever user interacts with the board
     fun onClickSquare(square: Pair<Int, Int>){
@@ -40,7 +53,7 @@ class ChessGameViewModel : ViewModel() {
     }
     // Function that resets board to initial state
     fun resetBoard(){
-        _chessBoardUiState.update { ChessBoardState() }   // TO DO
+        _chessBoardUiState.update { ChessBoardState() }   // Rebuilds the board state
     }
     // Function that moves a piece from starting position to target position
     private fun movePiece(fromRow: Int, fromColumn: Int, toRow: Int, toColumn: Int) {
@@ -105,10 +118,16 @@ class ChessGameViewModel : ViewModel() {
             resetPossibleMoves()
         }
 
+        // Increment the move counter only after black moves (for FEN)
+        var moveNumber:Int = currentBoardState.moveCounter
+        if(!currentBoardState.whiteTurn)
+            moveNumber += 1
+
         val newBoardState = ChessBoardState(
             piecesState = newPiecesState,
             whiteTurn = !currentBoardState.whiteTurn,
-            bKingInCheck = bKingInCheck
+            bKingInCheck = bKingInCheck,
+            moveCounter = moveNumber
         )
 
         // Update the ChessBoardState with the new board state
