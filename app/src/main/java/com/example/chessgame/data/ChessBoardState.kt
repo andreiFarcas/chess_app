@@ -27,5 +27,3 @@ data class ChessBoardState (
 
     val moveCounter: Int = 1,
 )
-
-

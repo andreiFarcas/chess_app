@@ -10,6 +10,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.unit.sp
 import com.example.chessgame.R
 import com.example.chessgame.ui.ChessGameViewModel
 import com.example.chessgame.ui.components.ChessBoardUi
@@ -36,7 +37,12 @@ fun PlayScreen(
             Text(text = "Reset Board")
         }
         Text(
-            text = chessGameViewModel.testFenInterface()
+            text = "FEN code for position:\n ${chessGameViewModel.testFenInterface()}\n",
+            fontSize = 10.sp
+        )
+        Text(
+            text = "Stockfish suggested move:\n ${chessGameViewModel.testStockfish()}",
+            fontSize = 10.sp
         )
     }
 }

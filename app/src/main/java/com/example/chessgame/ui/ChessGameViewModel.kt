@@ -16,8 +16,7 @@ import kotlinx.coroutines.flow.update
 
  */
 
-class ChessGameViewModel(chessEngine: ChessEngine) : ViewModel() {
-    private val chessEngine = chessEngine
+class ChessGameViewModel(private val chessEngine: ChessEngine) : ViewModel() {
 
     private val _chessBoardUiState = MutableStateFlow(ChessBoardState())
     val chessBoardUiState: StateFlow<ChessBoardState> = _chessBoardUiState.asStateFlow()
@@ -26,6 +25,12 @@ class ChessGameViewModel(chessEngine: ChessEngine) : ViewModel() {
         val currentBoardState = _chessBoardUiState.value
 
         return chessEngine.getFenFromChessBoardState(currentBoardState)
+    }
+
+    fun testStockfish(): String? {
+        val currentBoardState = _chessBoardUiState.value
+        val fen = chessEngine.getFenFromChessBoardState(currentBoardState)
+        return chessEngine.getBestMove(fen, 5)
     }
 
     // Function called whenever user interacts with the board

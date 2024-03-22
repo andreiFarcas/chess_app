@@ -55,9 +55,7 @@ fun ChessBoardUi(
 
                         // We check what piece we have on that square
                         val piece: String = piecesState[i][j]
-
-                        //Log.d("ChessBoardUi", "piece: {$piece}, i: {$i}, j{$j}")
-
+                        
                         // Get the right image for the piece, or 0 if there is no piece
                         val imageResource = DataSource.piecesImages[piece] ?: 0
 
