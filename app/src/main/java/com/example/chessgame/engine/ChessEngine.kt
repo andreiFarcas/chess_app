@@ -27,8 +27,9 @@ class ChessEngine(context: Context) {
         val outputStream = OutputStreamWriter(process!!.outputStream)
         val inputStream = BufferedReader(InputStreamReader(process!!.inputStream))
 
+        outputStream.write("setoption name Skill Level value 1\n")
         outputStream.write("position fen $fen\n")
-        outputStream.write("go depth $depth\n") // Adjusts difficulty??
+        outputStream.write("go movetime 500\n")
         outputStream.flush() // make sure we send the commands immediately
 
         var line: String?

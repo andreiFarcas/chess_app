@@ -26,4 +26,7 @@ data class ChessBoardState (
     val bKingInCheck: Boolean = false,
 
     val moveCounter: Int = 1,
+
+    val playVsStockfish: Boolean = false,
+    val difficultyStockfish: Int = 1,
 )

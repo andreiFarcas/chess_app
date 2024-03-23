@@ -20,13 +20,6 @@ fun PuzzlesScreen(
         Text(
             text = "Here you will be able to train your brain!"
         )
-        ChessBoardUi(
-            chessGameViewModel =chessGameViewModel,
-            clickedSquare = Pair(-1, -1),
-            piecesState = boardState.piecesState,
-            possibleMoves = boardState.possibleMoves,
-            bKingInCheck = boardState.bKingInCheck
-        )
     }
 }
 

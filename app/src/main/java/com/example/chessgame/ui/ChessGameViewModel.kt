@@ -1,7 +1,7 @@
 package com.example.chessgame.ui
 
-import android.app.Application
 import android.util.Log
+import androidx.compose.runtime.currentRecomposeScope
 import androidx.lifecycle.ViewModel
 import com.example.chessgame.data.ChessBoardState
 import com.example.chessgame.engine.ChessEngine
@@ -21,6 +21,16 @@ class ChessGameViewModel(private val chessEngine: ChessEngine) : ViewModel() {
     private val _chessBoardUiState = MutableStateFlow(ChessBoardState())
     val chessBoardUiState: StateFlow<ChessBoardState> = _chessBoardUiState.asStateFlow()
 
+    fun checkPlayVsStockfish(): Boolean{
+        return _chessBoardUiState.value.playVsStockfish
+    }
+    fun setPlayVsStockfish(boolValue: Boolean) {
+        val currentState = _chessBoardUiState.value
+        if(currentState.playVsStockfish != boolValue){
+            _chessBoardUiState.value = currentState.copy(playVsStockfish = boolValue)
+        }
+    }
+
     fun testFenInterface(): String {
         val currentBoardState = _chessBoardUiState.value
 
@@ -30,7 +40,27 @@ class ChessGameViewModel(private val chessEngine: ChessEngine) : ViewModel() {
     fun testStockfish(): String? {
         val currentBoardState = _chessBoardUiState.value
         val fen = chessEngine.getFenFromChessBoardState(currentBoardState)
+
         return chessEngine.getBestMove(fen, 5)
+    }
+
+    fun moveByStockfish() {
+        val currentBoardState = _chessBoardUiState.value
+        val fen = chessEngine.getFenFromChessBoardState(currentBoardState)
+
+        val bestMove: String? = chessEngine.getBestMove(fen, 5)
+
+        // Make the move suggested by Stockfish
+        // Convert from letter representation to normal square indexes
+        val initialSquare = Pair(8 - (bestMove?.get(1) ?: '0').digitToInt(), letterToNumber(bestMove?.get(0) ?: 'a'))
+        val targetSquare = Pair(8 - (bestMove?.get(3) ?: '0').digitToInt(), letterToNumber(bestMove?.get(2) ?: 'a'))
+
+        movePiece(initialSquare.first, initialSquare.second, targetSquare.first, targetSquare.second)
+    }
+
+    // Used to covert a move like e2e4 to regular indexes
+    private fun letterToNumber(letter: Char): Int {
+        return letter.code - 'a'.code  // basically maps a->7, b->6, c->5 etc...
     }
 
     // Function called whenever user interacts with the board
@@ -50,16 +80,19 @@ class ChessGameViewModel(private val chessEngine: ChessEngine) : ViewModel() {
                 resetPossibleMoves() // Remove existing possible moves markings
             }
 
-            // We for possible moves if we selected a piece
+            // We search for possible moves if we selected a piece
             if(currentBoardState.piecesState[square.first][square.second] != ""){
                 markPossibleMoves(square, _chessBoardUiState.value, false)
             }
         }
     }
+
     // Function that resets board to initial state
     fun resetBoard(){
-        _chessBoardUiState.update { ChessBoardState() }   // Rebuilds the board state
+        val currentBoardState = _chessBoardUiState.value
+        _chessBoardUiState.update { ChessBoardState(playVsStockfish = currentBoardState.playVsStockfish) }   // Rebuilds the board state
     }
+
     // Function that moves a piece from starting position to target position
     private fun movePiece(fromRow: Int, fromColumn: Int, toRow: Int, toColumn: Int) {
         val currentBoardState = _chessBoardUiState.value
@@ -86,6 +119,7 @@ class ChessGameViewModel(private val chessEngine: ChessEngine) : ViewModel() {
         }
 
         val afterMoveBoardState = ChessBoardState(
+            playVsStockfish = currentBoardState.playVsStockfish,
             piecesState = newPiecesState,
             whiteTurn = currentBoardState.whiteTurn,
             bKingInCheck = currentBoardState.bKingInCheck
@@ -129,6 +163,7 @@ class ChessGameViewModel(private val chessEngine: ChessEngine) : ViewModel() {
             moveNumber += 1
 
         val newBoardState = ChessBoardState(
+            playVsStockfish = currentBoardState.playVsStockfish,
             piecesState = newPiecesState,
             whiteTurn = !currentBoardState.whiteTurn,
             bKingInCheck = bKingInCheck,
@@ -137,6 +172,10 @@ class ChessGameViewModel(private val chessEngine: ChessEngine) : ViewModel() {
 
         // Update the ChessBoardState with the new board state
         _chessBoardUiState.value = newBoardState
+
+        // If we play vs CPU and is not our turn let CPU move
+        if(!newBoardState.whiteTurn && newBoardState.playVsStockfish)
+            moveByStockfish()
     }
     // Function that resets clicked square markings
     private fun resetClickedSquare(){
@@ -159,6 +198,7 @@ class ChessGameViewModel(private val chessEngine: ChessEngine) : ViewModel() {
     init{
         resetBoard()
     }
+
     // Function that checks if opposing king is in check, right after a move
     private fun checkForCheck(currentBoardState: ChessBoardState): Boolean{
         var bKingInCheck = false

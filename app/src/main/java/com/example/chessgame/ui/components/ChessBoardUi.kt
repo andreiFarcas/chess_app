@@ -27,11 +27,11 @@ import com.example.chessgame.ui.ChessGameViewModel
 // Composable that draws a chessboard, receives an 8x8 list of pieces codes
 @Composable
 fun ChessBoardUi(
-    chessGameViewModel: ChessGameViewModel = viewModel(),
+    chessGameViewModel: ChessGameViewModel,
     piecesState: List<List<String>>,
     clickedSquare: Pair<Int, Int>,
     possibleMoves: List<Pair<Int, Int>>,
-    bKingInCheck: Boolean
+    bKingInCheck: Boolean,
 ){
     Box(modifier = Modifier
         .fillMaxWidth()
@@ -55,7 +55,7 @@ fun ChessBoardUi(
 
                         // We check what piece we have on that square
                         val piece: String = piecesState[i][j]
-                        
+
                         // Get the right image for the piece, or 0 if there is no piece
                         val imageResource = DataSource.piecesImages[piece] ?: 0
 
@@ -124,22 +124,3 @@ fun ChessSquareUi(
     }
 }
 
-@Preview
-@Composable
-fun ChessBoardPreview(){
-    ChessBoardUi(
-        piecesState = listOf(
-            listOf("bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"),
-            listOf("bP", "bP", "bP", "bP", "bP", "bP", "bP", "bP"),
-            listOf("", "", "", "", "", "", "", ""),
-            listOf("", "", "", "", "", "", "", ""),
-            listOf("", "", "", "", "", "", "", ""),
-            listOf("", "", "", "", "", "", "", ""),
-            listOf("wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"),
-            listOf("wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR")
-        ),
-        clickedSquare = Pair(-1, -1),
-        possibleMoves = listOf(),
-        bKingInCheck = false,
-    )
-}

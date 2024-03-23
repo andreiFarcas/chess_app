@@ -1,11 +1,11 @@
 package com.example.chessgame
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.example.chessgame.engine.ChessEngine
 import com.example.chessgame.ui.ChessGameViewModel
+import com.example.chessgame.ui.screens.ChessGameApp
 import com.example.chessgame.ui.theme.ChessGameTheme
 import java.io.File
 import java.io.FileOutputStream
@@ -32,9 +32,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // Function used to copy the executable stockfish file in the internal memory of the device
-    //      internal memory refers to a part of memory that is allocated to our app by Android and
-    //      it allows us to store and execute files like the stockfish compiled binary.
+    /*
+        Function used to copy the executable stockfish file in the internal memory of the device
+          internal memory refers to a part of memory that is allocated to our app by Android and
+          it allows us to store and execute files like the stockfish compiled binary.
+    */
     private fun copyStockfishToInternalStorage() {
         val inputStream = assets.open("stockfish")
         val outFile = File(filesDir, "stockfish")
@@ -51,13 +53,4 @@ class MainActivity : ComponentActivity() {
         // Set executable permissions
         outFile.setExecutable(true)
     }
-
-    private fun chessEngineTest(){
-        val chessEngine = ChessEngine(this)
-        val fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1\n" // Example FEN, replace with current position
-        val bestMove = chessEngine.getBestMove(fen, 15)
-        Log.d("Stockfish", "Best move: $bestMove")
-        chessEngine.close()
-    }
-
 }

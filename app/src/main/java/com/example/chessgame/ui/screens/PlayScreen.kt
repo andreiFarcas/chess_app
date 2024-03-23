@@ -1,6 +1,5 @@
 package com.example.chessgame.ui.screens
 
-
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
@@ -15,16 +14,23 @@ import com.example.chessgame.R
 import com.example.chessgame.ui.ChessGameViewModel
 import com.example.chessgame.ui.components.ChessBoardUi
 
-
 @Composable
 fun PlayScreen(
     chessGameViewModel: ChessGameViewModel,
+    playVsStockfish: Boolean,
 ){
     val boardState by chessGameViewModel.chessBoardUiState.collectAsState()
+
+    // Sets if we play vs stockfish or not (depends on user choice from  menu)
+    chessGameViewModel.setPlayVsStockfish(playVsStockfish)
+
     Column {
         Text(
             text = "Here you will be able to play chess",
             modifier = Modifier.padding(end = dimensionResource(id = R.dimen.padding_small))
+        )
+        Text(
+            text = "\nMove counter: ${boardState.moveCounter}"
         )
         ChessBoardUi(
             chessGameViewModel = chessGameViewModel,
@@ -40,10 +46,17 @@ fun PlayScreen(
             text = "FEN code for position:\n ${chessGameViewModel.testFenInterface()}\n",
             fontSize = 10.sp
         )
-        Text(
-            text = "Stockfish suggested move:\n ${chessGameViewModel.testStockfish()}",
-            fontSize = 10.sp
-        )
+
+        if(!chessGameViewModel.checkPlayVsStockfish()){
+            Text(
+                text = "Stockfish suggested move:\n ${chessGameViewModel.testStockfish()}",
+                fontSize = 10.sp
+            )
+            Button(onClick = {chessGameViewModel.moveByStockfish() }) {
+                Text(text = "Let Stockfish Move")
+            }
+        }
+
     }
 }
 
