@@ -28,20 +28,22 @@ fun ChessGameApp(
     ){
         composable(route = ChessGameScreen.Menu.name){
             MenuScreen(
-                onPlayButtonClicked = {navController.navigate(ChessGameScreen.Play.name)},
+                navController = navController,
+                //onPlayButtonClicked = {navController.navigate(ChessGameScreen.Play.name)},
                 onPracticeButtonClicked = {navController.navigate(ChessGameScreen.Practice.name)},
                 onPuzzlesButtonClicked = {navController.navigate(ChessGameScreen.Puzzles.name)},
                 onAboutButtonClicked = {navController.navigate(ChessGameScreen.About.name)}
             )
         }
-        composable(route = ChessGameScreen.Play.name){
-            PlayScreen(chessGameViewModel, true)
+        composable(route = ChessGameScreen.Play.name + "/{difficulty}") { backStackEntry ->
+            val difficulty = backStackEntry.arguments?.getString("difficulty") ?: "Easy" // Default to "Easy" if not specified
+            PlayScreen(chessGameViewModel, true, difficulty)
         }
         composable(route = ChessGameScreen.Puzzles.name){
             PuzzlesScreen()
         }
         composable(route = ChessGameScreen.Practice.name){
-            PlayScreen(chessGameViewModel, false)
+            PlayScreen(chessGameViewModel, false, "Hard")
         }
         composable(route = ChessGameScreen.About.name){
             AboutScreen()

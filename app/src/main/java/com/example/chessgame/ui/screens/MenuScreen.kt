@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
+import androidx.navigation.NavController
 import com.example.chessgame.ui.theme.ChessGameTheme
 
 /*
@@ -39,7 +40,8 @@ import com.example.chessgame.ui.theme.ChessGameTheme
 
 @Composable
 fun MenuScreen(
-    onPlayButtonClicked: () -> Unit,
+    navController: NavController,
+    //onPlayButtonClicked: (String) -> Unit,  // replaced by direct navcontroler.navigate call
     onPuzzlesButtonClicked: () -> Unit,
     onPracticeButtonClicked: () -> Unit,
     onAboutButtonClicked: () -> Unit,
@@ -66,7 +68,9 @@ fun MenuScreen(
         ){
             MainMenuDropDown(
                 labelResource = "Play",
-                onClick = onPlayButtonClicked
+                onClick = { difficulty ->
+                    navController.navigate(ChessGameScreen.Play.name + "/$difficulty")
+                }
             )
             MainMenuButton(
                 labelResource = "Puzzles",
@@ -109,7 +113,7 @@ fun MainMenuButton(
 @Composable
 fun MainMenuDropDown(
     labelResource: String,
-    onClick: () -> Unit,
+    onClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ){
     val expandedButton = remember{mutableStateOf(false)}
@@ -153,7 +157,7 @@ fun MainMenuDropDown(
             SelectColor(selectedColor, modifier)
 
             Button(
-                onClick = onClick,
+                onClick = { onClick(selectedDifficulty.value) },
                 modifier = modifier
                     .align(Alignment.CenterHorizontally)
                     .padding(
@@ -281,18 +285,5 @@ fun SelectDifficulty(selectedDifficulty: MutableState<String>, modifier: Modifie
                 }
             )
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MenuScreenPreview() {
-    ChessGameTheme {
-        MenuScreen(
-            onPlayButtonClicked = {},
-            onPuzzlesButtonClicked = {},
-            onAboutButtonClicked = {},
-            onPracticeButtonClicked = {}
-        )
     }
 }

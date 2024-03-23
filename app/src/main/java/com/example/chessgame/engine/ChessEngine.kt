@@ -23,13 +23,13 @@ class ChessEngine(context: Context) {
         process = Runtime.getRuntime().exec(stockfishPath)
     }
 
-    fun getBestMove(fen: String, depth: Int): String? {
+    fun getBestMove(fen: String, difficulty: Int): String? {
         val outputStream = OutputStreamWriter(process!!.outputStream)
         val inputStream = BufferedReader(InputStreamReader(process!!.inputStream))
 
-        outputStream.write("setoption name Skill Level value 1\n")
+        outputStream.write("setoption name Skill Level value $difficulty\n")
         outputStream.write("position fen $fen\n")
-        outputStream.write("go movetime 500\n")
+        outputStream.write("go movetime 2000\n")
         outputStream.flush() // make sure we send the commands immediately
 
         var line: String?

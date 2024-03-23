@@ -1,8 +1,9 @@
 package com.example.chessgame.ui
 
+import kotlinx.coroutines.*
 import android.util.Log
-import androidx.compose.runtime.currentRecomposeScope
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.chessgame.data.ChessBoardState
 import com.example.chessgame.engine.ChessEngine
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,25 +38,58 @@ class ChessGameViewModel(private val chessEngine: ChessEngine) : ViewModel() {
         return chessEngine.getFenFromChessBoardState(currentBoardState)
     }
 
-    fun testStockfish(): String? {
-        val currentBoardState = _chessBoardUiState.value
-        val fen = chessEngine.getFenFromChessBoardState(currentBoardState)
+    private val _bestMoveText = MutableStateFlow("Waiting for Stockfish...")
+    val bestMoveText: StateFlow<String> = _bestMoveText.asStateFlow() // Will be read in practice mode
 
-        return chessEngine.getBestMove(fen, 5)
+    fun findBestMoveByStockfish() {
+        viewModelScope.launch {
+            // Perform the move calculation on a background thread
+            withContext(Dispatchers.IO) {
+                val currentBoardState = _chessBoardUiState.value
+                val fen = chessEngine.getFenFromChessBoardState(currentBoardState)
+
+                val bestMove = chessEngine.getBestMove(fen, 15)
+
+                _bestMoveText.value = "Stockfish suggested move:\n$bestMove"
+            }
+        }
+    }
+
+    fun setDifficultyLevelStockfish(difficulty: String) {
+        Log.d("Level", "Level set to: $difficulty")
+        _chessBoardUiState.update { currentState ->
+            when(difficulty) {
+                "Easy" -> currentState.copy(difficultyStockfish = 1)
+                "Medium" -> currentState.copy(difficultyStockfish = 3)
+                "Hard" -> currentState.copy(difficultyStockfish = 6)
+                else -> currentState // No change if the difficulty string doesn't match
+            }
+        }
     }
 
     fun moveByStockfish() {
-        val currentBoardState = _chessBoardUiState.value
-        val fen = chessEngine.getFenFromChessBoardState(currentBoardState)
+        // Happens in a coroutine because don't want the execution of the rest of the app to be
+        // affected by Stockfish computation time
+        viewModelScope.launch {
+            val currentBoardState = _chessBoardUiState.value
+            val fen = chessEngine.getFenFromChessBoardState(currentBoardState)
 
-        val bestMove: String? = chessEngine.getBestMove(fen, 5)
+            // Perform the move calculation on a background thread
+            withContext(Dispatchers.IO) {
+                val bestMove: String? = chessEngine.getBestMove(fen, currentBoardState.difficultyStockfish)
 
-        // Make the move suggested by Stockfish
-        // Convert from letter representation to normal square indexes
-        val initialSquare = Pair(8 - (bestMove?.get(1) ?: '0').digitToInt(), letterToNumber(bestMove?.get(0) ?: 'a'))
-        val targetSquare = Pair(8 - (bestMove?.get(3) ?: '0').digitToInt(), letterToNumber(bestMove?.get(2) ?: 'a'))
+                bestMove?.let {
+                    // Convert from letter representation to normal square indexes
+                    val initialSquare = Pair(8 - it[1].digitToInt(), letterToNumber(it[0]))
+                    val targetSquare = Pair(8 - it[3].digitToInt(), letterToNumber(it[2]))
 
-        movePiece(initialSquare.first, initialSquare.second, targetSquare.first, targetSquare.second)
+                    // Update the UI on the main thread
+                    withContext(Dispatchers.Main) {
+                        movePiece(initialSquare.first, initialSquare.second, targetSquare.first, targetSquare.second)
+                    }
+                }
+            }
+        }
     }
 
     // Used to covert a move like e2e4 to regular indexes
@@ -118,7 +152,7 @@ class ChessGameViewModel(private val chessEngine: ChessEngine) : ViewModel() {
             newPiecesState.add(newRow) // Add the row to the newPiecesState
         }
 
-        val afterMoveBoardState = ChessBoardState(
+        val afterMoveBoardState = currentBoardState.copy(
             playVsStockfish = currentBoardState.playVsStockfish,
             piecesState = newPiecesState,
             whiteTurn = currentBoardState.whiteTurn,
@@ -162,7 +196,7 @@ class ChessGameViewModel(private val chessEngine: ChessEngine) : ViewModel() {
         if(!currentBoardState.whiteTurn)
             moveNumber += 1
 
-        val newBoardState = ChessBoardState(
+        val newBoardState = currentBoardState.copy(
             playVsStockfish = currentBoardState.playVsStockfish,
             piecesState = newPiecesState,
             whiteTurn = !currentBoardState.whiteTurn,
@@ -176,6 +210,10 @@ class ChessGameViewModel(private val chessEngine: ChessEngine) : ViewModel() {
         // If we play vs CPU and is not our turn let CPU move
         if(!newBoardState.whiteTurn && newBoardState.playVsStockfish)
             moveByStockfish()
+
+        // If we are in practice mode, recompute the suggested move every time
+        if(!newBoardState.playVsStockfish)
+            findBestMoveByStockfish()
     }
     // Function that resets clicked square markings
     private fun resetClickedSquare(){

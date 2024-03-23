@@ -18,12 +18,13 @@ import com.example.chessgame.ui.components.ChessBoardUi
 fun PlayScreen(
     chessGameViewModel: ChessGameViewModel,
     playVsStockfish: Boolean,
+    difficultyLevelStockfish: String,
 ){
     val boardState by chessGameViewModel.chessBoardUiState.collectAsState()
 
     // Sets if we play vs stockfish or not (depends on user choice from  menu)
     chessGameViewModel.setPlayVsStockfish(playVsStockfish)
-
+    chessGameViewModel.setDifficultyLevelStockfish(difficultyLevelStockfish)
     Column {
         Text(
             text = "Here you will be able to play chess",
@@ -31,6 +32,9 @@ fun PlayScreen(
         )
         Text(
             text = "\nMove counter: ${boardState.moveCounter}"
+        )
+        Text(
+            text = "Stockfish level: ${boardState.difficultyStockfish}"
         )
         ChessBoardUi(
             chessGameViewModel = chessGameViewModel,
@@ -43,20 +47,17 @@ fun PlayScreen(
             Text(text = "Reset Board")
         }
         Text(
-            text = "FEN code for position:\n ${chessGameViewModel.testFenInterface()}\n",
+            text = "\n FEN code for position:\n ${chessGameViewModel.testFenInterface()}\n",
             fontSize = 10.sp
         )
 
         if(!chessGameViewModel.checkPlayVsStockfish()){
+            // Prints move suggestion from stockfish
+            val bestMoveText by chessGameViewModel.bestMoveText.collectAsState()
             Text(
-                text = "Stockfish suggested move:\n ${chessGameViewModel.testStockfish()}",
-                fontSize = 10.sp
+                text = bestMoveText
             )
-            Button(onClick = {chessGameViewModel.moveByStockfish() }) {
-                Text(text = "Let Stockfish Move")
-            }
         }
-
     }
 }
 
