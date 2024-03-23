@@ -12,12 +12,17 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.chessgame.R
 import com.example.chessgame.data.DataSource
@@ -51,6 +56,15 @@ fun ChessBoardUi(
                 ) {
                     for(j in 0..7){
                         val isGreenSquare = (i + j) % 2 == 0 // Based on parity of indexes we color dark or light
+
+                        // Add chessboard notations:
+                        var letter = ' '
+                        var number = ' '
+                        if(i == 7)
+                            letter = 'a' + j
+                        if(j == 7)
+                            number = '0' + (8 - i)
+
                         val squareColor = if(isGreenSquare) Color.Green else Color.Gray
 
                         // We check what piece we have on that square
@@ -70,6 +84,8 @@ fun ChessBoardUi(
 
                         // We have 8 squares / row
                         ChessSquareUi(
+                            notationLetter = letter,
+                            notationNumber = number,
                             imageResource = imageResource,
                             onClick = {
                                 chessGameViewModel.onClickSquare(Pair(i, j))
@@ -97,6 +113,8 @@ fun ChessSquareUi(
     isPossibleMove: Boolean,
     imageResource: Int,
     isKingInCheck: Boolean,
+    notationLetter: Char,
+    notationNumber: Char,
     modifier: Modifier = Modifier
 ){
     Box(
@@ -118,6 +136,26 @@ fun ChessSquareUi(
                 Image(
                     painter = painterResource(id = imageResource),
                     contentDescription = null
+                )
+            }
+
+            // Display the letter notation on the bottom left
+            if (notationLetter != ' ') {
+                Text(
+                    text = notationLetter.toString(),
+                    color = Color.Black,
+                    fontSize = 10.sp,
+                    modifier = Modifier.align(Alignment.BottomStart).padding(1.dp)
+                )
+            }
+
+            // Display the number notation on the top right
+            if (notationNumber != ' ') {
+                Text(
+                    text = notationNumber.toString(),
+                    color = Color.Black,
+                    fontSize = 10.sp,
+                    modifier = Modifier.align(Alignment.TopEnd)
                 )
             }
         }
