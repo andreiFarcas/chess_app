@@ -1,13 +1,18 @@
 package com.example.chessgame.ui.screens
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -18,19 +23,21 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.chessgame.R
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
-import com.example.chessgame.ui.theme.ChessGameTheme
+import com.example.chessgame.interfaces.BluetoothManager
 
 /*
 
@@ -38,6 +45,7 @@ import com.example.chessgame.ui.theme.ChessGameTheme
 
  */
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MenuScreen(
     navController: NavController,
@@ -45,48 +53,180 @@ fun MenuScreen(
     onPuzzlesButtonClicked: () -> Unit,
     onPracticeButtonClicked: () -> Unit,
     onAboutButtonClicked: () -> Unit,
-
+    bluetoothManager: BluetoothManager,
     modifier: Modifier = Modifier
 ){
+    // Tracks changes in connection with the board
+    val isBoardConnected = bluetoothManager.connectionStatus.collectAsState(initial = false).value
+
+    // Remembers if Are you sure? dialog is shown or not
+    var showDisconnectionDialog by remember { mutableStateOf(false) }
+
     Column(
         modifier = modifier
     ) {
+        BoardConnectionRow(
+            isBoardConnected = isBoardConnected,
+            onConnectClicked = { bluetoothManager.searchForDevices() },
+            onDisconnectClicked = { showDisconnectionDialog = true },
+            showDisconnectionDialog = showDisconnectionDialog,
+            setShowDisconnectionDialog = { showDisconnectionDialog = it },
+            bluetoothManager = bluetoothManager
+        )
+
+        ChessLogo(modifier)
+
+        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_large)))
+
+        MenuOptions(
+            navController = navController,
+            onPracticeButtonClicked = onPracticeButtonClicked,
+            onAboutButtonClicked = onAboutButtonClicked,
+            onPuzzlesButtonClicked = onPuzzlesButtonClicked,
+            modifier = modifier
+        )
+
+        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
+    }
+
+}
+
+@Composable
+fun MenuOptions(
+    navController: NavController,
+    onPracticeButtonClicked: () -> Unit,
+    onAboutButtonClicked: () -> Unit,
+    onPuzzlesButtonClicked: () -> Unit,
+    modifier: Modifier
+){
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.SpaceBetween // Ensures space between the elements of the menu
+    ){
+        MainMenuDropDown(
+            labelResource = "Play",
+            onClick = { difficulty ->
+                navController.navigate(ChessGameScreen.Play.name + "/$difficulty")
+            }
+        )
+        MainMenuButton(
+            labelResource = "Puzzles",
+            onClick = onPuzzlesButtonClicked
+        )
+        MainMenuButton(
+            labelResource = "Practice",
+            onClick = onPracticeButtonClicked
+        )
+        MainMenuButton(
+            labelResource = "About",
+            onClick = onAboutButtonClicked
+        )
+    }
+}
+
+@Composable
+fun ChessLogo(modifier: Modifier){
+    Box(
+        modifier = modifier
+            .height(275.dp)
+            .fillMaxWidth()
+            .padding(dimensionResource(R.dimen.padding_large))
+    ){
         Image(
             painter = painterResource(id = R.drawable.chess_app_icon),
             contentDescription = null,
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(dimensionResource(R.dimen.padding_large))
+                .align(Alignment.Center)
                 .clip(RoundedCornerShape(18.dp)) // Apply rounded corners
         )
+    }
+}
 
-        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_large)))
+// Row with: Button to connect/disconnect and status of connected/disconnected
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun BoardConnectionRow(
+    isBoardConnected: Boolean,
+    onConnectClicked: () -> Unit,
+    onDisconnectClicked: () -> Unit,
+    showDisconnectionDialog: Boolean,
+    setShowDisconnectionDialog: (Boolean) -> Unit,
+    bluetoothManager: BluetoothManager
+) {
+    Row(
+        modifier = Modifier.padding(dimensionResource(id = R.dimen.padding_medium))
+    ) {
+        if (!isBoardConnected) {
+            Button(
+                onClick = onConnectClicked,
+            ) {
+                Text(text = "Connect Chessboard")
+            }
 
-        Column(
-            modifier = modifier,
-            verticalArrangement = Arrangement.SpaceBetween // Ensures space between the elements of the menu
-        ){
-            MainMenuDropDown(
-                labelResource = "Play",
-                onClick = { difficulty ->
-                    navController.navigate(ChessGameScreen.Play.name + "/$difficulty")
-                }
+            Spacer(Modifier.weight(1f)) // This pushes the next text item to the end
+
+            Text(
+                text = "Not connected",
+                color = Color.Red,
+                modifier = Modifier.align(Alignment.CenterVertically)
             )
-            MainMenuButton(
-                labelResource = "Puzzles",
-                onClick = onPuzzlesButtonClicked
-            )
-            MainMenuButton(
-                labelResource = "Practice",
-                onClick = onPracticeButtonClicked
-            )
-            MainMenuButton(
-                labelResource = "About",
-                onClick = onAboutButtonClicked
+        } else {
+            Button(
+                onClick = { setShowDisconnectionDialog(true) },
+            ) {
+                Text(text = "Disconnect Chessboard")
+            }
+
+            // Place the disconnection dialog call here if needed or handle it outside
+
+            Spacer(Modifier.weight(1f))
+
+            Text(
+                text = "Connected",
+                color = Color.Green,
+                modifier = Modifier.align(Alignment.CenterVertically)
             )
         }
+    }
 
-        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
+    // Composable that shows an "Are you sure?" dialog
+    if (showDisconnectionDialog) {
+        DisconnectDialog(
+            showDialog = showDisconnectionDialog,
+            onDismiss = { setShowDisconnectionDialog(false) },
+            onConfirm = {
+                bluetoothManager.disconnectDevice()
+                setShowDisconnectionDialog(false)
+            }
+        )
+    }
+}
+
+// Dialog called when pressed disconnect button
+@Composable
+fun DisconnectDialog(
+    showDialog: Boolean,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text("Disconnect Chessboard") },
+            text = { Text("Are you sure you want to disconnect the chessboard?") },
+            confirmButton = {
+                Button(
+                    onClick = onConfirm
+                ) {
+                    Text("Yes")
+                }
+            },
+            dismissButton = {
+                Button(onClick = onDismiss) {
+                    Text("No")
+                }
+            }
+        )
     }
 }
 

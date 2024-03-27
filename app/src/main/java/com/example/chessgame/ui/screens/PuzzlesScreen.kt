@@ -6,7 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.chessgame.ui.components.ChessBoardUi
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.chessgame.ui.ChessGameViewModel
 
@@ -18,7 +17,7 @@ fun PuzzlesScreen(
 
     Column {
         Text(
-            text = "Here you will be able to train your brain!"
+            text = "Here you will be able to train your brain!\n Hopefully..."
         )
     }
 }

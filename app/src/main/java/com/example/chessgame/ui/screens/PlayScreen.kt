@@ -14,6 +14,12 @@ import com.example.chessgame.R
 import com.example.chessgame.ui.ChessGameViewModel
 import com.example.chessgame.ui.components.ChessBoardUi
 
+/*
+
+    Function that displays a "Play Screen" used both in play vs Stockfish or solo practice
+
+ */
+
 @Composable
 fun PlayScreen(
     chessGameViewModel: ChessGameViewModel,
