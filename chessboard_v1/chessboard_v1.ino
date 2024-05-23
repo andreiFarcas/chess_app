@@ -14,6 +14,8 @@ AppInterface interface = AppInterface(coreXY, board);
 
 const int tranzistorPIN = 8;
 
+bool turn = 1;
+
 void setup()
 {
   pinMode(tranzistorPIN, OUTPUT);
@@ -23,12 +25,24 @@ void setup()
   Serial3.begin(9600); // Begin serial communication with HC-05 using Serial3 (RX3 and TX3)
 
   coreXY.initialize();
+
+  turn = 1; // First move made by human
 }
 
 void loop()
 {  
-  interface.readData();
+  if(turn == 1){
+    // Human moves
+    board.readPiecePresence(); // Waits and reads the move made by human player 
+    turn = 0;
+  } else{
+    // Stockfish moves
+    interface.readData(); // Reads data from serial communication via app and makes the right action based on recieved info
+    turn = 1;
+  }
   //readInput();
+
+  delay(1000);
 }
 
 void readInput(){

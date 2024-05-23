@@ -6,11 +6,13 @@ public:
   // Constructor
   Board();
 
-  void readBoardState(); // TO DO
+  void readPiecePresence(); 
+  void printPiecePresence();
   void move(int fromRow, int fromColumn, int toRow, int toColumn);
   void printState();
 //private:
   char state[8][12];
+  int presence[8][12];
 };
 
 #endif
