@@ -66,13 +66,17 @@ class BluetoothManager(private val activity: ComponentActivity) {
     // Called from MainActivity once the user selects a device, connects to it
     fun handleActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == MainActivity.SELECT_DEVICE_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            val device: BluetoothDevice? = data?.getParcelableExtra(CompanionDeviceManager.EXTRA_DEVICE)
+            val device: BluetoothDevice? =
+                data?.getParcelableExtra(CompanionDeviceManager.EXTRA_DEVICE)
 
             if (device != null) {
                 connectDevice(device)  // Connect to the selected device
             }
         } else {
-            Log.d("BluetoothDebug", "Result not OK or request code does not match: requestCode = $requestCode, resultCode = $resultCode")
+            Log.d(
+                "BluetoothDebug",
+                "Result not OK or request code does not match: requestCode = $requestCode, resultCode = $resultCode"
+            )
         }
     }
 
@@ -91,13 +95,21 @@ class BluetoothManager(private val activity: ComponentActivity) {
             object : CompanionDeviceManager.Callback() {
                 @Deprecated("Deprecated in Java")
                 override fun onDeviceFound(chooserLauncher: IntentSender) {
-                    activity.startIntentSenderForResult(chooserLauncher, MainActivity.SELECT_DEVICE_REQUEST_CODE, null, 0, 0, 0)
+                    activity.startIntentSenderForResult(
+                        chooserLauncher,
+                        MainActivity.SELECT_DEVICE_REQUEST_CODE,
+                        null,
+                        0,
+                        0,
+                        0
+                    )
                 }
 
                 override fun onFailure(error: CharSequence?) {
                     Log.e("BluetoothDebug", "Pairing failed: $error")
                 }
-            }, null)
+            }, null
+        )
     }
 
     // Connects the bluetooth device
@@ -125,7 +137,6 @@ class BluetoothManager(private val activity: ComponentActivity) {
                     connectedSocket = socket
                     changeConnectionStatus(true)
                     Log.d("BluetoothDebug", "Connection established")
-
                 }
             } catch (e: IOException) {
                 Log.e("BluetoothDebug", "Connection failed: " + e.message, e)
@@ -134,7 +145,7 @@ class BluetoothManager(private val activity: ComponentActivity) {
     }
 
     // Disconnects from the device
-    fun disconnectDevice(){
+    fun disconnectDevice() {
         connectedSocket?.close()
         changeConnectionStatus(false) // Eventually lets the UI know we disconnected
     }
@@ -154,6 +165,45 @@ class BluetoothManager(private val activity: ComponentActivity) {
                 Log.e("BluetoothDebug", "Failed to send data: " + e.message, e)
             }
         }.start()
+    }
+
+    // Receives data from chessboard
+    fun receiveDataFromDevice(): String {
+        var incomingMessage = ""
+        try {
+            val inputStream = connectedSocket?.inputStream
+            val buffer = ByteArray(1024)
+            val stringBuilder = StringBuilder()
+
+            if (connectedSocket == null || !connectedSocket!!.isConnected) {
+                Log.d("BluetoothDebug", "Aci ii baiu")
+            }
+
+            // Keep listening to the InputStream until a \n character is received
+            while (connectedSocket != null) {
+                val bytes = inputStream?.read(buffer) ?: -1
+                if (bytes > 0) {
+                    val incomingPart = String(buffer, 0, bytes)
+                    stringBuilder.append(incomingPart)
+
+                    // Check if the incoming message contains a newline character
+                    val tempMessage = stringBuilder.toString()
+                    val newlineIndex = tempMessage.indexOf('\n')
+                    if (newlineIndex != -1) {
+                        // Extract the complete message up to the newline character
+                        incomingMessage = tempMessage.substring(0, newlineIndex).trim()
+                        Log.d("BluetoothDebug", "Received data: $incomingMessage")
+
+                        // Remove the processed part from the StringBuilder
+                        stringBuilder.delete(0, newlineIndex + 1)
+                        break
+                    }
+                }
+            }
+        } catch (e: IOException) {
+            Log.e("BluetoothDebug", "Error occurred when receiving data: " + e.message, e)
+        }
+        return incomingMessage
     }
 }
 

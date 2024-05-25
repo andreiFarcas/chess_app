@@ -1,11 +1,14 @@
 package com.example.chessgame.ui
 
+import android.os.Build
 import kotlinx.coroutines.*
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.chessgame.data.ChessBoardState
 import com.example.chessgame.engine.ChessEngine
+import com.example.chessgame.interfaces.BluetoothManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,13 +17,19 @@ import kotlinx.coroutines.flow.update
 /*
 
  ChessGameViewModel is responsible to react and provide information for and after all UI interactions
+ during a game.
 
  */
-
-class ChessGameViewModel(private val chessEngine: ChessEngine) : ViewModel() {
+@RequiresApi(Build.VERSION_CODES.O)
+class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluetoothManager: BluetoothManager) : ViewModel() {
 
     private val _chessBoardUiState = MutableStateFlow(ChessBoardState())
     val chessBoardUiState: StateFlow<ChessBoardState> = _chessBoardUiState.asStateFlow()
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun sendMoveToBluetooth(fromRow: Int, fromColumn: Int, toRow: Int, toColumn: Int){
+        bluetoothManager.sendDataToDevice("$fromRow$fromColumn$toRow$toColumn\n")
+    }
 
     fun checkPlayVsStockfish(): Boolean{
         return _chessBoardUiState.value.playVsStockfish
@@ -60,15 +69,16 @@ class ChessGameViewModel(private val chessEngine: ChessEngine) : ViewModel() {
         _chessBoardUiState.update { currentState ->
             when(difficulty) {
                 "Easy" -> currentState.copy(difficultyStockfish = 1)
-                "Medium" -> currentState.copy(difficultyStockfish = 3)
-                "Hard" -> currentState.copy(difficultyStockfish = 6)
+                "Medium" -> currentState.copy(difficultyStockfish = 2)
+                "Hard" -> currentState.copy(difficultyStockfish = 3)
+                "Legend" -> currentState.copy(difficultyStockfish = 5)
                 else -> currentState // No change if the difficulty string doesn't match
             }
         }
     }
 
     fun moveByStockfish() {
-        // Happens in a coroutine because don't want the execution of the rest of the app to be
+        // Happens in a coroutine because I don't want the execution of the rest of the app to be
         // affected by Stockfish computation time
         viewModelScope.launch {
             val currentBoardState = _chessBoardUiState.value
@@ -82,6 +92,9 @@ class ChessGameViewModel(private val chessEngine: ChessEngine) : ViewModel() {
                     // Convert from letter representation to normal square indexes
                     val initialSquare = Pair(8 - it[1].digitToInt(), letterToNumber(it[0]))
                     val targetSquare = Pair(8 - it[3].digitToInt(), letterToNumber(it[2]))
+
+                    // Also send Stockfish moves to bluetooth
+                    sendMoveToBluetooth(initialSquare.first, initialSquare.second, targetSquare.first, targetSquare.second)
 
                     // Update the UI on the main thread
                     withContext(Dispatchers.Main) {
@@ -125,9 +138,12 @@ class ChessGameViewModel(private val chessEngine: ChessEngine) : ViewModel() {
     fun resetBoard(){
         val currentBoardState = _chessBoardUiState.value
         _chessBoardUiState.update { ChessBoardState(playVsStockfish = currentBoardState.playVsStockfish) }   // Rebuilds the board state
+        // Send return home to the board
+        bluetoothManager.sendDataToDevice("s\n")
     }
 
     // Function that moves a piece from starting position to target position
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun movePiece(fromRow: Int, fromColumn: Int, toRow: Int, toColumn: Int) {
         val currentBoardState = _chessBoardUiState.value
         val pieceToMove = currentBoardState.piecesState[fromRow][fromColumn] // String code of piece to move
@@ -187,6 +203,9 @@ class ChessGameViewModel(private val chessEngine: ChessEngine) : ViewModel() {
                 }
             }
 
+            // Send the move to Bluetooth (Only stockfish moves will be sent)
+            // sendMoveToBluetooth(fromRow, fromColumn, toRow, toColumn)
+
             // Reset possible moves
             resetPossibleMoves()
         }
@@ -211,10 +230,31 @@ class ChessGameViewModel(private val chessEngine: ChessEngine) : ViewModel() {
         if(!newBoardState.whiteTurn && newBoardState.playVsStockfish)
             moveByStockfish()
 
+        // If we play vs CPU and is white turn wait for move by human:
+        if(newBoardState.whiteTurn && newBoardState.playVsStockfish)
+            moveFromChessboard()
+
         // If we are in practice mode, recompute the suggested move every time
         if(!newBoardState.playVsStockfish)
             findBestMoveByStockfish()
     }
+
+    fun moveFromChessboard(){
+        val receivedMove = bluetoothManager.receiveDataFromDevice()
+
+        // Data received in format (fromRow, fromColumn, toRow, toColumn)
+        val trimmedMessage = receivedMove.trim().split(" ")
+
+        if (trimmedMessage.size == 4) {
+            val fromRow = trimmedMessage[0].toInt()
+            val fromColumn = trimmedMessage[1].toInt() - 2
+            val toRow = trimmedMessage[2].toInt()
+            val toColumn = trimmedMessage[3].toInt() - 2
+
+            movePiece(fromRow, fromColumn, toRow, toColumn)
+        }
+    }
+
     // Function that resets clicked square markings
     private fun resetClickedSquare(){
         _chessBoardUiState.update { currentBoardState ->

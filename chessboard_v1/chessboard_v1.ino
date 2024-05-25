@@ -40,7 +40,7 @@ void loop()
     interface.readData(); // Reads data from serial communication via app and makes the right action based on recieved info
     turn = 1;
   }
-  //readInput();
+  readInput();
 
   delay(1000);
 }

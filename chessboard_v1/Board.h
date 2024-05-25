@@ -8,6 +8,7 @@ public:
 
   void readPiecePresence(); 
   void printPiecePresence();
+  void processDetection(int row, int column);
   void move(int fromRow, int fromColumn, int toRow, int toColumn);
   void printState();
 //private:

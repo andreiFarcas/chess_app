@@ -34,8 +34,8 @@ class MainActivity : ComponentActivity() {
         // Create the ChessEngine with applicationContext
         val chessEngine = ChessEngine(applicationContext)
 
-        // Instantiate the ChessGameViewModel with the engine included
-        viewModel = ChessGameViewModel(chessEngine)
+        // Instantiate the ChessGameViewModel with the engine and bluetooth manager included
+        viewModel = ChessGameViewModel(chessEngine, bluetoothManager)
 
         setContent {
             ChessGameTheme {
@@ -79,5 +79,4 @@ class MainActivity : ComponentActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         bluetoothManager.handleActivityResult(requestCode, resultCode, data)
     }
-
 }

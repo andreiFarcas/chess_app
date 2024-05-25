@@ -28,7 +28,7 @@ fun AboutScreen() {
             modifier = Modifier.padding(bottom = dimensionResource(id = R.dimen.padding_small))
         )
         Text(
-            text = "Steppers: 28byj-48; Drivers: ulm2005",
+            text = "Steppers: 28byj-48; Drivers: ulm2005; Bluetooth: HC-05",
             modifier = Modifier.padding(bottom = dimensionResource(id = R.dimen.padding_small))
         )
         Text(

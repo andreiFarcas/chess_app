@@ -1,6 +1,7 @@
 package com.example.chessgame.ui.components
 
-import android.util.Log
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,17 +20,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.LineHeightStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.chessgame.R
 import com.example.chessgame.data.DataSource
 import com.example.chessgame.ui.ChessGameViewModel
 
 
 // Composable that draws a chessboard, receives an 8x8 list of pieces codes
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ChessBoardUi(
     chessGameViewModel: ChessGameViewModel,

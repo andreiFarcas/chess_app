@@ -1,3 +1,4 @@
+#include "HardwareSerial.h"
 #include "Board.h"
 #include <Arduino.h>
 
@@ -21,7 +22,6 @@ const int mux_o3 = 7;
 const int mux_o4 = 37;
 const int mux_o5 = 38;
 const int mux_o6 = 39;
-
 
 Board::Board() {
   // Matrix that represents each piece on their initial position
@@ -59,6 +59,58 @@ Board::Board() {
   pinMode(mux_o4, INPUT);
   pinMode(mux_o5, INPUT);
   pinMode(mux_o6, INPUT);
+
+  // Read initial position for piece placement
+  int initialPresence[8][12] = {
+    {0,0,1,1,1,1,1,1,1,1,0,0},
+    {0,0,1,1,1,1,1,1,1,1,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,1,1,1,1,1,1,1,1,0,0},
+    {0,0,1,1,1,1,1,1,1,1,0,0},
+  };
+
+  // Copy initialState into our state
+  for(int i = 0; i < 8; i++){
+    for(int j = 0; j < 12; j++){
+      presence[i][j] = initialPresence[i][j];
+    }
+  }
+
+}
+
+void Board::move(int fromRow, int fromColumn, int toRow, int toColumn){
+  state[toRow][toColumn] = state[fromRow][fromColumn];
+  state[fromRow][fromColumn] = '.';
+
+  presence[toRow][toColumn] = 1;
+  presence[fromRow][fromColumn] = 0;
+
+  printState();
+}
+
+// Called when human intervention detected and checks wether a piece was placed on the square or removed and act accordingly
+void Board::processDetection(int row, int column){
+  // Human intervention detected -> check wether a piece was placed on the square or removed
+    if(presence[row][column] == 1){
+      // Intervention was to remove a piece, meomorize its original place
+      liftedPiece[0] = row;
+      liftedPiece[1] = column;
+    } else if(presence[row][column] == 0){
+    // Intevrention was to place down a previously lifted piece (assume lifted piece exists in the memory)
+    move(liftedPiece[0], liftedPiece[1], row, column); // Updates the board state
+
+    // TO DO: SEND THE MOVE TO APPLICATION (OBS: SPECIAL CASE WHEN CAPTURES OR SPECIAL MOVES HAPPEN)
+    String dataToSend = String(liftedPiece[0]) + " " + String(liftedPiece[1]) + " " + String(row) + " " + String(column);
+  
+    // Send the string to the HC-05 via Serial3
+    Serial3.println(dataToSend);
+  
+    // Optionally, print the data to Serial for debugging
+    Serial.println("Sent to Bluetooth: " + dataToSend);
+  }
 }
 
 void Board::readPiecePresence(){
@@ -78,53 +130,42 @@ void Board::readPiecePresence(){
     int row = (i/8 + 1) * 7 + i/8 - i;
 
     if(presence[row][1 - i/8] != !digitalRead(mux_o1)){
-      /*
-      if(presence[row][1 - i/8] == 1){
-        // We removed a piece
-        liftedPiece[0] = row;
-        liftedPiece[1] = 1 - i/8;
-      }
-
-      if(presence[row][1 - i/8] == 0){
-        // We dropped the piece down
-        move(liftedPiece[0], liftedPiece[1], row, 1 - i/8);
-        // TO DO: SEND THE MOVE TO APPLICATION 
-      }
-      */
-      presence[row][1 - i/8] = !digitalRead(mux_o1);
+      // Human intervention detected -> check wether a piece was placed on the square or removed and act accordingly
+      processDetection(row, 1 - i/8);
+      presence[row][1 - i/8] = !digitalRead(mux_o1); // Update presence matrix
       printPiecePresence();
     } 
     if (presence[row][3 - i/8] != !digitalRead(mux_o2)) {
+      processDetection(row, 3 - i/8);
       presence[row][3 - i/8] = !digitalRead(mux_o2);
       printPiecePresence();
     }
     if (presence[row][5 - i/8] != !digitalRead(mux_o3)) {
+      processDetection(row, 5 - i/8);
       presence[row][5 - i/8] = !digitalRead(mux_o3);
       printPiecePresence();
     }
 
     if (presence[row][7 - i/8] != !digitalRead(mux_o4)) {
+      processDetection(row, 7 - i/8);
       presence[row][7 - i/8] = !digitalRead(mux_o4);
       printPiecePresence();
     }
 
     if (presence[row][9 - i/8] != !digitalRead(mux_o5)) {
+      processDetection(row, 9 - i/8);
       presence[row][9 -i/8] = !digitalRead(mux_o5);
       printPiecePresence();
     } 
 
     if (presence[row][11 - i/8] != !digitalRead(mux_o6)) {
+      processDetection(row, 11 - i/8);
       presence[row][11 - i/8] = !digitalRead(mux_o6);
       printPiecePresence();
     }
     
     delay(10);
   }
-}
-
-void Board::move(int fromRow, int fromColumn, int toRow, int toColumn){
-  state[toRow][toColumn] = state[fromRow][fromColumn];
-  state[fromRow][fromColumn] = '.';
 }
 
 void Board::printState(){
@@ -135,6 +176,7 @@ void Board::printState(){
     }
     Serial.println();  // New line at the end of each row
   }  
+  Serial.println("------------------------"); 
 }
 
 void Board::printPiecePresence(){
