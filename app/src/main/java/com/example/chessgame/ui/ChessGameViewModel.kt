@@ -78,30 +78,27 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
     }
 
     fun moveByStockfish() {
-        // Happens in a coroutine because I don't want the execution of the rest of the app to be
-        // affected by Stockfish computation time
-        viewModelScope.launch {
-            val currentBoardState = _chessBoardUiState.value
-            val fen = chessEngine.getFenFromChessBoardState(currentBoardState)
+        // Get the current board state and FEN representation
+        val currentBoardState = _chessBoardUiState.value
+        val fen = chessEngine.getFenFromChessBoardState(currentBoardState)
+        Log.d("BluetoothDebug", "moveByStockfish called")
 
-            // Perform the move calculation on a background thread
-            withContext(Dispatchers.IO) {
-                val bestMove: String? = chessEngine.getBestMove(fen, currentBoardState.difficultyStockfish)
+        // Perform the move calculation directly (this will block the main thread)
+        val bestMove: String? = chessEngine.getBestMove(fen, currentBoardState.difficultyStockfish)
+        Log.d("BluetoothDebug", "bestMove computed")
 
-                bestMove?.let {
-                    // Convert from letter representation to normal square indexes
-                    val initialSquare = Pair(8 - it[1].digitToInt(), letterToNumber(it[0]))
-                    val targetSquare = Pair(8 - it[3].digitToInt(), letterToNumber(it[2]))
+        bestMove?.let {
+            // Convert from letter representation to normal square indexes
+            val initialSquare = Pair(8 - it[1].digitToInt(), letterToNumber(it[0]))
+            val targetSquare = Pair(8 - it[3].digitToInt(), letterToNumber(it[2]))
 
-                    // Also send Stockfish moves to bluetooth
-                    sendMoveToBluetooth(initialSquare.first, initialSquare.second, targetSquare.first, targetSquare.second)
+            // Also send Stockfish moves to Bluetooth
+            sendMoveToBluetooth(initialSquare.first, initialSquare.second, targetSquare.first, targetSquare.second)
+            Log.d("BluetoothDebug", "Move sent to bluetooth")
 
-                    // Update the UI on the main thread
-                    withContext(Dispatchers.Main) {
-                        movePiece(initialSquare.first, initialSquare.second, targetSquare.first, targetSquare.second)
-                    }
-                }
-            }
+            // Update the UI directly (this will also block the main thread)
+            movePiece(initialSquare.first, initialSquare.second, targetSquare.first, targetSquare.second)
+            Log.d("BluetoothDebug", "UI updated")
         }
     }
 
@@ -145,6 +142,9 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
     // Function that moves a piece from starting position to target position
     @RequiresApi(Build.VERSION_CODES.O)
     private fun movePiece(fromRow: Int, fromColumn: Int, toRow: Int, toColumn: Int) {
+
+        Log.d("BluetoothDebug", "movePiece Started")
+
         val currentBoardState = _chessBoardUiState.value
         val pieceToMove = currentBoardState.piecesState[fromRow][fromColumn] // String code of piece to move
 
@@ -175,7 +175,8 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
             bKingInCheck = currentBoardState.bKingInCheck
         )
 
-        var bKingInCheck = false
+        // PIECE OF CODE THAT CHECKS FOR CHECK - NOT FUNCTIONAL
+/*        var bKingInCheck = false
         var bKCoordinates = Pair(0, 0)
         if(afterMoveBoardState.whiteTurn){
             // Find the black king:
@@ -203,12 +204,9 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
                 }
             }
 
-            // Send the move to Bluetooth (Only stockfish moves will be sent)
-            // sendMoveToBluetooth(fromRow, fromColumn, toRow, toColumn)
-
             // Reset possible moves
             resetPossibleMoves()
-        }
+        }*/
 
         // Increment the move counter only after black moves (for FEN)
         var moveNumber:Int = currentBoardState.moveCounter
@@ -219,7 +217,7 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
             playVsStockfish = currentBoardState.playVsStockfish,
             piecesState = newPiecesState,
             whiteTurn = !currentBoardState.whiteTurn,
-            bKingInCheck = bKingInCheck,
+            //bKingInCheck = bKingInCheck,
             moveCounter = moveNumber
         )
 
@@ -234,7 +232,7 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
         if(newBoardState.whiteTurn && newBoardState.playVsStockfish)
             moveFromChessboard()
 
-        // If we are in practice mode, recompute the suggested move every time
+        // If we are in practice mode, recompute the suggested move every time:
         if(!newBoardState.playVsStockfish)
             findBestMoveByStockfish()
     }
