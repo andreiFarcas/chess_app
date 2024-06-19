@@ -100,16 +100,23 @@ void Board::processDetection(int row, int column){
       liftedPiece[1] = column;
     } else if(presence[row][column] == 0){
     // Intevrention was to place down a previously lifted piece (assume lifted piece exists in the memory)
-    move(liftedPiece[0], liftedPiece[1], row, column); // Updates the board state
+    char piece = state[liftedPiece[0]][liftedPiece[1]];
 
-    // TO DO: SEND THE MOVE TO APPLICATION (OBS: SPECIAL CASE WHEN CAPTURES OR SPECIAL MOVES HAPPEN)
-    String dataToSend = String(liftedPiece[0]) + " " + String(liftedPiece[1]) + " " + String(row) + " " + String(column);
+    // Check if we have moved a black piece, we are in process of making a capture so we do not send that to bluetooth yet
+    if (piece == 'B' || piece == 'K' || piece == 'R' || piece == 'P' || piece == 'Q' || piece == 'N') {
+      move(liftedPiece[0], liftedPiece[1], row, column); // Updates the board state
+    }else{
+      move(liftedPiece[0], liftedPiece[1], row, column); // Updates the board state
+
+      // Sends the data to bluetooth 
+      String dataToSend = String(liftedPiece[0]) + " " + String(liftedPiece[1]) + " " + String(row) + " " + String(column);
   
-    // Send the string to the HC-05 via Serial3
-    Serial3.println(dataToSend);
+      // Send the string to the HC-05 via Serial3
+      Serial3.println(dataToSend);
   
-    // Optionally, print the data to Serial for debugging
-    Serial.println("Sent to Bluetooth: " + dataToSend);
+      // Optionally, print the data to Serial for debugging
+      Serial.println("Sent to Bluetooth: " + dataToSend);
+    }    
   }
 }
 

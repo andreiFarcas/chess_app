@@ -25,6 +25,9 @@ void AppInterface::readData(){
 }
 
 void AppInterface::processData(String inputString) {
+  int offsetX = 5;  // offset on x position from "home" position to first square of the grave
+  int offsetY = 296; // max position on y coordinate
+
   int toMove[4];
 
   if(inputString[0] == 'c'){ // Command used to calibrate the initial position via bluetooth using coordinates in mm
@@ -37,7 +40,8 @@ void AppInterface::processData(String inputString) {
   } else if (inputString == "s") { // Command to return to starting position
     coreXY.returnToInitialPosition();
   } else {
-    // Here we process all data (moves) recieved from the Android application
+    //   ----------------------  HERE WE PROCESS ALL DATA (MOVES) RECIEVED FROM THE ANDROID APPLICATION  -----------------------------------
+    
     Serial.println(inputString);
     // Data is in the format "fromRow fromColumn toRow toColumn" (with no spaces)
     for (int i = 0; i < 4; i++) {
@@ -47,53 +51,57 @@ void AppInterface::processData(String inputString) {
     // Check if we capture a piece, then first move the captured piece on the side
     if(board.state[toMove[2]][toMove[3]+2] != '.'){
       // We have a piece on destination square so we have to move it away
-      coreXY.moveTo(8+80+40*toMove[3], 296-40*toMove[2]); // move to destination and grab the piece 
+      coreXY.moveTo(offsetX+80+40*toMove[3], offsetY-40*toMove[2]); // move to destination and grab the piece 
       digitalWrite(tranzistorPIN, HIGH); 
 
       // Vertical movement to make sure we will travel on the edges
-      coreXY.moveTo(8+80+40*toMove[3], 296-40*toMove[2] + 20); // move to destination and grab the piece 
+      coreXY.moveTo(offsetX+80+40*toMove[3], offsetY-40*toMove[2] + 20); // move to destination and grab the piece 
 
-      // Choose a place in the graveyard
+      // Choose a place in the graveyard 
+      bool placeFound = false;
       for(int i = 0; i < 8; i++){
         for(int j = 0; j < 2; j++){
-          if(board.state[i][j] == '.'){
+          if((board.state[i][j] == '.') && (!placeFound)){
             // Empty grave found, we move there 
-            coreXY.moveTo(8+40*i - 20, 296-40*toMove[2] + 20); // Just horizontal movement (with added -20 on x  to keep the piece on the edge)
-            coreXY.moveTo(8+40*i - 20, 296-40*j);
-            coreXY.moveTo(8+40*i, 296-40*j);
+            placeFound = true;
+            coreXY.moveTo(offsetX+40*i + 20, offsetY-40*toMove[2] + 20); // Just horizontal movement (with added +20 on x  to keep the piece on the edge)
+            coreXY.moveTo(offsetX+40*i + 20, offsetY-40*j);
+            coreXY.moveTo(offsetX+40*i, offsetY-40*j);
             digitalWrite(tranzistorPIN, LOW); 
+
+            board.move(toMove[2], toMove[3]+2, i, j); // updates the board state
           }
         }
       }
     }    
 
-    // Pick the piece
-    coreXY.moveTo(8+80+40*toMove[1], 296-40*toMove[0]); // Moves to pick position
+    // Pick the piece Stockfish moved
+    coreXY.moveTo(offsetX+80+40*toMove[1], offsetY-40*toMove[0]); // Moves to pick position
     digitalWrite(tranzistorPIN, HIGH);
 
     // Check if the moved piece is a knight and compute special path
     if(board.state[toMove[0]][toMove[1]+2] == 'n' || board.state[toMove[0]][toMove[1]+2] == 'N'){
       // We compute a different path to make sure we don't collide with other pieces
       if(toMove[0] - toMove[2] == -1){
-        coreXY.moveTo(8+80+40*toMove[1], 296-40*toMove[0] - 20);
-        coreXY.moveTo(8+80+40*toMove[3], 296-40*toMove[0] - 20);
-        coreXY.moveTo(8+80+40*toMove[3], 296-40*toMove[2]);
+        coreXY.moveTo(offsetX+80+40*toMove[1], offsetY-40*toMove[0] - 20);
+        coreXY.moveTo(offsetX+80+40*toMove[3], offsetY-40*toMove[0] - 20);
+        coreXY.moveTo(offsetX+80+40*toMove[3], offsetY-40*toMove[2]);
       }else if (toMove[0] - toMove[2] == 1) {
-        coreXY.moveTo(8+80+40*toMove[1], 296-40*toMove[0] - 20);
-        coreXY.moveTo(8+80+40*toMove[3], 296-40*toMove[0] - 20);
-        coreXY.moveTo(8+80+40*toMove[3], 296-40*toMove[2]);
+        coreXY.moveTo(offsetX+80+40*toMove[1], offsetY-40*toMove[0] - 20);
+        coreXY.moveTo(offsetX+80+40*toMove[3], offsetY-40*toMove[0] - 20);
+        coreXY.moveTo(offsetX+80+40*toMove[3], offsetY-40*toMove[2]);
       }else if (toMove[1] - toMove[3] == 1){
-        coreXY.moveTo(8+80+40*toMove[1] - 20, 296-40*toMove[0]);
-        coreXY.moveTo(8+80+40*toMove[1] - 20, 296-40*toMove[2]);
-        coreXY.moveTo(8+80+40*toMove[3], 300-40*toMove[2]);
+        coreXY.moveTo(offsetX+80+40*toMove[1] - 20, offsetY-40*toMove[0]);
+        coreXY.moveTo(offsetX+80+40*toMove[1] - 20, offsetY-40*toMove[2]);
+        coreXY.moveTo(offsetX+80+40*toMove[3], offsetY-40*toMove[2]);
       }else if (toMove[1] - toMove[3] == -1) {
-        coreXY.moveTo(8+80+40*toMove[1] + 20, 296-40*toMove[0]);
-        coreXY.moveTo(8+80+40*toMove[1] + 20, 296-40*toMove[2]);
-        coreXY.moveTo(8+80+40*toMove[3], 296-40*toMove[2]);
+        coreXY.moveTo(offsetX+80+40*toMove[1] + 20, offsetY-40*toMove[0]);
+        coreXY.moveTo(offsetX+80+40*toMove[1] + 20, offsetY-40*toMove[2]);
+        coreXY.moveTo(offsetX+80+40*toMove[3], offsetY-40*toMove[2]);
       }
     }else{
           // Piece is not a knight so we make simple, linear move
-          coreXY.moveTo(8+80+40*toMove[3], 296-40*toMove[2]);
+          coreXY.moveTo(offsetX+80+40*toMove[3], offsetY-40*toMove[2]);
     }
 
     board.move(toMove[0], toMove[1]+2, toMove[2], toMove[3]+2);
