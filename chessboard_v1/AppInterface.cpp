@@ -39,6 +39,8 @@ void AppInterface::processData(String inputString) {
     }
   } else if (inputString == "s") { // Command to return to starting position
     coreXY.returnToInitialPosition();
+    // Also reset the state of the board
+    board.reset();
   } else {
     //   ----------------------  HERE WE PROCESS ALL DATA (MOVES) RECIEVED FROM THE ANDROID APPLICATION  -----------------------------------
     
@@ -64,9 +66,9 @@ void AppInterface::processData(String inputString) {
           if((board.state[i][j] == '.') && (!placeFound)){
             // Empty grave found, we move there 
             placeFound = true;
-            coreXY.moveTo(offsetX+40*i + 20, offsetY-40*toMove[2] + 20); // Just horizontal movement (with added +20 on x  to keep the piece on the edge)
-            coreXY.moveTo(offsetX+40*i + 20, offsetY-40*j);
-            coreXY.moveTo(offsetX+40*i, offsetY-40*j);
+            coreXY.moveTo(40*i + 20, offsetY-40*toMove[2] + 20); // Just horizontal movement (with added +20 on x  to keep the piece on the edge)
+            coreXY.moveTo(40*i + 20, offsetY-40*j);
+            coreXY.moveTo(40*i, offsetY-40*j);
             digitalWrite(tranzistorPIN, LOW); 
 
             board.move(toMove[2], toMove[3]+2, i, j); // updates the board state

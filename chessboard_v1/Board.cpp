@@ -120,6 +120,7 @@ void Board::processDetection(int row, int column){
   }
 }
 
+// Reads all sensors and detects any intervention on the pieces
 void Board::readPiecePresence(){
   // Read sequentially 6 squares at a time
   for(int i = 0; i < 16; i++){
@@ -136,43 +137,37 @@ void Board::readPiecePresence(){
     // Read the value of each mux output for a certain square on the board and update the array
     int row = (i/8 + 1) * 7 + i/8 - i;
 
-    if(presence[row][1 - i/8] != !digitalRead(mux_o1)){
-      // Human intervention detected -> check wether a piece was placed on the square or removed and act accordingly
-      processDetection(row, 1 - i/8);
-      presence[row][1 - i/8] = !digitalRead(mux_o1); // Update presence matrix
-      printPiecePresence();
-    } 
-    if (presence[row][3 - i/8] != !digitalRead(mux_o2)) {
-      processDetection(row, 3 - i/8);
-      presence[row][3 - i/8] = !digitalRead(mux_o2);
-      printPiecePresence();
-    }
-    if (presence[row][5 - i/8] != !digitalRead(mux_o3)) {
-      processDetection(row, 5 - i/8);
-      presence[row][5 - i/8] = !digitalRead(mux_o3);
-      printPiecePresence();
-    }
-
-    if (presence[row][7 - i/8] != !digitalRead(mux_o4)) {
-      processDetection(row, 7 - i/8);
-      presence[row][7 - i/8] = !digitalRead(mux_o4);
-      printPiecePresence();
-    }
-
-    if (presence[row][9 - i/8] != !digitalRead(mux_o5)) {
-      processDetection(row, 9 - i/8);
-      presence[row][9 -i/8] = !digitalRead(mux_o5);
-      printPiecePresence();
-    } 
-
-    if (presence[row][11 - i/8] != !digitalRead(mux_o6)) {
-      processDetection(row, 11 - i/8);
-      presence[row][11 - i/8] = !digitalRead(mux_o6);
-      printPiecePresence();
-    }
-    
+    // For each mux we check the multiplexor outputs to detect changes in pieces presence
+    checkHumanIntervention(row, 1 - i/8, mux_o1);
+    checkHumanIntervention(row, 3 - i/8, mux_o2);
+    checkHumanIntervention(row, 5 - i/8, mux_o3);
+    checkHumanIntervention(row, 7 - i/8, mux_o4);
+    checkHumanIntervention(row, 9 - i/8, mux_o5);
+    checkHumanIntervention(row, 11 - i/8, mux_o6);
+        
     delay(10);
   }
+}
+
+void Board::checkHumanIntervention(int row, int column, int muxNumber){
+  // For each square we check human intervention
+  if (presence[row][column] != !digitalRead(muxNumber)) {
+      // Human intervention detected
+      // Added filtering to try and eliminate false readings and disturbances
+      bool falseReading = false;
+      for(int k = 0; k < 3; k++){
+        if(presence[row][column] == !digitalRead(muxNumber))
+          falseReading = true;
+        delay(100);
+      }
+
+      if(!falseReading){
+        // Good reading so we continue the process
+        processDetection(row, column);
+        presence[row][column] = !digitalRead(muxNumber); // Update the presence matrix
+        printPiecePresence(); 
+      }
+    }
 }
 
 void Board::printState(){
@@ -195,4 +190,8 @@ void Board::printPiecePresence(){
     Serial.println();  // New line at the end of each row
   }
   Serial.println("------------------------"); 
+}
+
+void Board::reset(){
+  *this = Board(); // Rebuilds the object to which "this" pointer points to
 }
