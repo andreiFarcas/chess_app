@@ -1,3 +1,4 @@
+#include "globals.h"
 #include "HardwareSerial.h"
 #include "Board.h"
 #include <Arduino.h>
@@ -24,6 +25,7 @@ const int mux_o5 = 38;
 const int mux_o6 = 39;
 
 Board::Board() {
+
   // Matrix that represents each piece on their initial position
   char initialState[8][12] = {
     {'.', '.', 'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R', '.', '.'},
@@ -113,8 +115,11 @@ void Board::processDetection(int row, int column){
   
       // Send the string to the HC-05 via Serial3
       Serial3.println(dataToSend);
-  
-      // Optionally, print the data to Serial for debugging
+
+      // Signals its Stockfish turn
+      turn = 0;
+
+      // Print the data to Serial for debugging
       Serial.println("Sent to Bluetooth: " + dataToSend);
     }    
   }

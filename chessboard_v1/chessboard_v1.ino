@@ -1,7 +1,12 @@
 #include <AccelStepper.h>
+
 #include "AppInterface.h"
 #include "CoreXY.h"
 #include "Board.h"
+#include "globals.h"
+
+// Initialize turn flag which is used to control the turn based behaviour
+bool turn = 1;
 
 // Declare coreXY which manages the motors and electromagnet position
 CoreXY coreXY = CoreXY();
@@ -13,8 +18,6 @@ Board board = Board();
 AppInterface interface = AppInterface(coreXY, board);
 
 const int tranzistorPIN = 8;
-
-bool turn = 1;
 
 void setup()
 {
@@ -33,16 +36,14 @@ void loop()
 {  
   if(turn == 1){
     // Human moves
-    board.readPiecePresence(); // Waits and reads the move made by human player 
-    turn = 0;
+    board.readPiecePresence(); // Waits and reads the move made by human player, sends it to app interface which send it to bluetooth 
   } else{
     // Stockfish moves
     interface.readData(); // Reads data from serial communication via app and makes the right action based on recieved info
-    turn = 1;
   }
   readInput();
 
-  delay(1000);
+  delay(500);
 }
 
 void readInput(){

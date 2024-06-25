@@ -1,5 +1,6 @@
 #include <HardwareSerial.h>
 #include <Arduino.h>
+#include "globals.h"
 #include "AppInterface.h"
 #include "CoreXY.h"
 
@@ -41,6 +42,8 @@ void AppInterface::processData(String inputString) {
     coreXY.returnToInitialPosition();
     // Also reset the state of the board
     board.reset();
+    // Resets turn flag
+    turn = 1;
   } else {
     //   ----------------------  HERE WE PROCESS ALL DATA (MOVES) RECIEVED FROM THE ANDROID APPLICATION  -----------------------------------
     
@@ -109,5 +112,8 @@ void AppInterface::processData(String inputString) {
     board.move(toMove[0], toMove[1]+2, toMove[2], toMove[3]+2);
     board.printState();
     digitalWrite(tranzistorPIN, LOW); // Drop the piece
+    
+    // Flags its human's turn
+    turn = 1;
   }
 }
