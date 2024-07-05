@@ -25,8 +25,17 @@ data class ChessBoardState (
     val wKingInCheck: Boolean = false,
     val bKingInCheck: Boolean = false,
 
+    // For Fen generation
     val moveCounter: Int = 1,
 
+    // Stockfish options
     val playVsStockfish: Boolean = false,
     val difficultyStockfish: Int = 1,
+
+    // Game Recording functionalities
+    val recordingGame: Boolean = false,
+    val moves: MutableList<List<Int>> = mutableListOf(),
+    val currentMove: Int = 0,
+    val watchRecording: Boolean = false,
+    val captures: List<Pair<Int, String>> = mutableListOf(),
 )

@@ -1,5 +1,6 @@
 package com.example.chessgame
 
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -37,9 +38,11 @@ class MainActivity : ComponentActivity() {
         // Instantiate the ChessGameViewModel with the engine and bluetooth manager included
         viewModel = ChessGameViewModel(chessEngine, bluetoothManager)
 
+        val context: Context = this
+
         setContent {
             ChessGameTheme {
-                ChessGameApp(viewModel, bluetoothManager)
+                ChessGameApp(context, viewModel, bluetoothManager)
             }
         }
     }

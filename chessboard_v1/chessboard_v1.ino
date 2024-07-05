@@ -6,7 +6,7 @@
 #include "globals.h"
 
 // Initialize turn flag which is used to control the turn based behaviour
-bool turn = 1;
+int turn = 1;
 
 // Declare coreXY which manages the motors and electromagnet position
 CoreXY coreXY = CoreXY();
@@ -33,17 +33,23 @@ void setup()
 }
 
 void loop()
-{  
-  if(turn == 1){
+{ 
+  Serial.println("Main loop called.");
+  if(turn == 2){
+    Serial.println("turn == 2");
+    board.readPiecePresence(); // Wait for move from human and send it to app
+    interface.readData(); // In case we recieve s we know that we must leave the game mode and reset the board
+  } else if(turn == 1){
+    Serial.println("turn 1");
     // Human moves
     board.readPiecePresence(); // Waits and reads the move made by human player, sends it to app interface which send it to bluetooth 
   } else{
+    Serial.println("turn 0");
     // Stockfish moves
     interface.readData(); // Reads data from serial communication via app and makes the right action based on recieved info
   }
-  readInput();
 
-  delay(500);
+  delay(1000);
 }
 
 void readInput(){

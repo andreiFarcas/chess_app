@@ -1,6 +1,7 @@
 package com.example.chessgame.ui.screens
 
 
+import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
@@ -15,6 +16,8 @@ enum class ChessGameScreen(){
     Menu,
     Play,
     Puzzles,
+    Record,
+    Watch,
     Practice,
     About
 }
@@ -24,6 +27,7 @@ enum class ChessGameScreen(){
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ChessGameApp(
+    context: Context,
     chessGameViewModel: ChessGameViewModel,
     bluetoothManager: BluetoothManager,
     navController: NavHostController = rememberNavController(),
@@ -38,6 +42,8 @@ fun ChessGameApp(
                 //onPlayButtonClicked = {navController.navigate(ChessGameScreen.Play.name)},
                 onPracticeButtonClicked = {navController.navigate(ChessGameScreen.Practice.name)},
                 onPuzzlesButtonClicked = {navController.navigate(ChessGameScreen.Puzzles.name)},
+                onRecordButtonClicked = {navController.navigate(ChessGameScreen.Record.name)},
+                onWatchButtonClicked = {navController.navigate(ChessGameScreen.Watch.name)},
                 onAboutButtonClicked = {navController.navigate(ChessGameScreen.About.name)},
                 bluetoothManager = bluetoothManager,
             )
@@ -48,6 +54,12 @@ fun ChessGameApp(
         }
         composable(route = ChessGameScreen.Puzzles.name){
             PuzzlesScreen(chessGameViewModel)
+        }
+        composable(route = ChessGameScreen.Record.name){
+            RecordMatchScreen(context, chessGameViewModel)
+        }
+        composable(route = ChessGameScreen.Watch.name){
+            WatchRecordingScreen(context, chessGameViewModel)
         }
         composable(route = ChessGameScreen.Practice.name){
             PlayScreen(chessGameViewModel, false, "Hard")

@@ -3,6 +3,7 @@ package com.example.chessgame.ui.screens
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
@@ -43,12 +44,7 @@ fun PlayScreen(
         }
     }
 
-
     Column {
-        Text(
-            text = "Here you will be able to play chess",
-            modifier = Modifier.padding(end = dimensionResource(id = R.dimen.padding_small))
-        )
         Text(
             text = "\nMove counter: ${boardState.moveCounter}"
         )
@@ -76,6 +72,15 @@ fun PlayScreen(
             Text(
                 text = bestMoveText
             )
+
+            Row {
+                Button(onClick = { chessGameViewModel.moveBack() }) {
+                    Text(text = "<")
+                }
+                Button(onClick = { chessGameViewModel.moveForward()} ) {
+                    Text(text = ">")
+                }
+            }
         }
     }
 }

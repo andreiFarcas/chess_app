@@ -43,10 +43,14 @@ void AppInterface::processData(String inputString) {
     // Also reset the state of the board
     board.reset();
     // Resets turn flag
+    Serial.println("Turn set 1 from recieving s if");
     turn = 1;
-  } else {
+  } else if(inputString == "r"){        // Command to start recording mode
+    turn = 2;
+    Serial.print("r was received, setting turn to ");
+    Serial.println(turn);
+  } else{
     //   ----------------------  HERE WE PROCESS ALL DATA (MOVES) RECIEVED FROM THE ANDROID APPLICATION  -----------------------------------
-    
     Serial.println(inputString);
     // Data is in the format "fromRow fromColumn toRow toColumn" (with no spaces)
     for (int i = 0; i < 4; i++) {
@@ -114,6 +118,10 @@ void AppInterface::processData(String inputString) {
     digitalWrite(tranzistorPIN, LOW); // Drop the piece
     
     // Flags its human's turn
-    turn = 1;
+    if(turn == 0){
+      turn = 1;
+      Serial.println("Turn set 1 from after stockfish move");
+    }
+      
   }
 }

@@ -51,6 +51,8 @@ fun MenuScreen(
     navController: NavController,
     //onPlayButtonClicked: (String) -> Unit,  // replaced by direct navcontroler.navigate call
     onPuzzlesButtonClicked: () -> Unit,
+    onRecordButtonClicked: () -> Unit,
+    onWatchButtonClicked: () -> Unit,
     onPracticeButtonClicked: () -> Unit,
     onAboutButtonClicked: () -> Unit,
     bluetoothManager: BluetoothManager,
@@ -81,6 +83,8 @@ fun MenuScreen(
         MenuOptions(
             navController = navController,
             onPracticeButtonClicked = onPracticeButtonClicked,
+            onRecordButtonClicked = onRecordButtonClicked,
+            onWatchButtonClicked = onWatchButtonClicked,
             onAboutButtonClicked = onAboutButtonClicked,
             onPuzzlesButtonClicked = onPuzzlesButtonClicked,
             modifier = modifier
@@ -91,10 +95,13 @@ fun MenuScreen(
 
 }
 
+
 @Composable
 fun MenuOptions(
     navController: NavController,
     onPracticeButtonClicked: () -> Unit,
+    onRecordButtonClicked: () -> Unit,
+    onWatchButtonClicked: () -> Unit,
     onAboutButtonClicked: () -> Unit,
     onPuzzlesButtonClicked: () -> Unit,
     modifier: Modifier
@@ -108,6 +115,14 @@ fun MenuOptions(
             onClick = { difficulty ->
                 navController.navigate(ChessGameScreen.Play.name + "/$difficulty")
             }
+        )
+        MainMenuButton(
+            labelResource = "Record Game",
+            onClick = onRecordButtonClicked
+        )
+        MainMenuButton(
+            labelResource = "Watch Record",
+            onClick = onWatchButtonClicked
         )
         MainMenuButton(
             labelResource = "Puzzles",

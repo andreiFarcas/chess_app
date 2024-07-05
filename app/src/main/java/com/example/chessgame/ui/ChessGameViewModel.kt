@@ -1,5 +1,6 @@
 package com.example.chessgame.ui
 
+import android.content.Context
 import android.os.Build
 import kotlinx.coroutines.*
 import android.util.Log
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import java.io.File
 
 /*
 
@@ -50,6 +52,7 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
     private val _bestMoveText = MutableStateFlow("Waiting for Stockfish...")
     val bestMoveText: StateFlow<String> = _bestMoveText.asStateFlow() // Will be read in practice mode
 
+    // Launches the chessEngine.getBestMove in a separate thread to avoid blocking the main thread
     fun findBestMoveByStockfish() {
         viewModelScope.launch {
             // Perform the move calculation on a background thread
@@ -107,6 +110,25 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
         return letter.code - 'a'.code  // basically maps a->7, b->6, c->5 etc...
     }
 
+    // Converts coordinates to normal chess representation
+    fun moveConversion(moveCoordinates: List<Int>, moveNumber: Int):String{
+        val fromRow = moveCoordinates[0]
+        val fromCol = moveCoordinates[1]
+        val toRow = moveCoordinates[2]
+        val toCol = moveCoordinates[3]
+
+        // Convert the column index to letter ('a' to 'h')
+        val columnLetters = "abcdefgh"
+
+        val fromColLetter = columnLetters[fromCol]
+        val fromRowNumber = 8 - fromRow
+        val toColLetter = columnLetters[toCol]
+        val toRowNumber = 8 - toRow
+
+        return "$moveNumber: $fromColLetter$fromRowNumber$toColLetter$toRowNumber"
+    }
+
+
     // Function called whenever user interacts with the board
     fun onClickSquare(square: Pair<Int, Int>){
         val currentBoardState = _chessBoardUiState.value
@@ -143,7 +165,7 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
     @RequiresApi(Build.VERSION_CODES.O)
     private fun movePiece(fromRow: Int, fromColumn: Int, toRow: Int, toColumn: Int) {
 
-        Log.d("BluetoothDebug", "movePiece Started")
+        Log.d("BluetoothDebug", "movePiece Started for move: $fromRow, $fromColumn to $toRow, $toColumn")
 
         val currentBoardState = _chessBoardUiState.value
         val pieceToMove = currentBoardState.piecesState[fromRow][fromColumn] // String code of piece to move
@@ -224,20 +246,62 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
         // Update the ChessBoardState with the new board state
         _chessBoardUiState.value = newBoardState
 
-        // If we play vs CPU and is not our turn let CPU move
-        if(!newBoardState.whiteTurn && newBoardState.playVsStockfish)
-            moveByStockfish()
+        // If we are just watching a recorded game don't do anything
+        if(!newBoardState.watchRecording) {
 
-        // If we play vs CPU and is white turn wait for move by human:
-        if(newBoardState.whiteTurn && newBoardState.playVsStockfish)
-            moveFromChessboard()
+            // If we play vs CPU and is not our turn let CPU move
+            if (!newBoardState.whiteTurn && newBoardState.playVsStockfish)
+                moveByStockfish()
 
-        // If we are in practice mode, recompute the suggested move every time:
-        if(!newBoardState.playVsStockfish)
-            findBestMoveByStockfish()
+            // If we play vs CPU and is white turn wait for move by human:
+            if (newBoardState.whiteTurn && newBoardState.playVsStockfish)
+                moveFromChessboard()
+
+            // If we are recording a game, always wait for move from chessboard:
+            Log.d("Recording", "recording game flag: ${newBoardState.recordingGame}")
+            if (newBoardState.recordingGame)
+                moveFromChessboard()
+
+            // If we are in practice mode, recompute the suggested move every time:
+            if (!newBoardState.playVsStockfish && !newBoardState.recordingGame) {
+                findBestMoveByStockfish()
+            }
+        }
     }
 
+    // Updates the gameRecording status
+    fun startRecording(){
+        resetBoard()
+
+        val currentBoardState = _chessBoardUiState.value
+        // Send start Recording Mode to the board
+        _chessBoardUiState.value = currentBoardState.copy(recordingGame = true, moves = mutableListOf())
+
+        Log.d("Recording", "Start Recording sent to chessboard and recordingGame flag set ${_chessBoardUiState.value.recordingGame}")
+    }
+
+    // Saves recording to a file
+    fun saveRecording(context: Context, recordingName: String){
+        val currentBoardState = _chessBoardUiState.value
+
+        saveMovesToFile(context, recordingName) // Saves all moves to the specified file
+
+        _chessBoardUiState.value = currentBoardState.copy(recordingGame = false, moves = mutableListOf())
+        resetBoard()
+    }
+
+    // Resets board and recording status
+    fun resetRecording(){
+        val currentBoardState = _chessBoardUiState.value
+        _chessBoardUiState.value = currentBoardState.copy(recordingGame = false, moves = mutableListOf())
+
+        resetBoard()
+    }
+
+    // Function that waits for data to be recieved from chessboard and executes the move
     fun moveFromChessboard(){
+        Log.d("Recording", "moveFromChessboard() called")
+
         val receivedMove = bluetoothManager.receiveDataFromDevice()
 
         // Data received in format (fromRow, fromColumn, toRow, toColumn)
@@ -249,9 +313,198 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
             val toRow = trimmedMessage[2].toInt()
             val toColumn = trimmedMessage[3].toInt() - 2
 
-            movePiece(fromRow, fromColumn, toRow, toColumn)
+            // If we are recording the game, save the move in the temporary list
+            val currentBoardState = _chessBoardUiState.value
+
+            Log.d("Record", "current flag: ${currentBoardState.recordingGame}")
+
+            if(currentBoardState.recordingGame == true){
+                // Create a copy of the current moves list and add the new move
+                val updatedMoves = currentBoardState.moves.toMutableList()
+
+                if(toColumn < 7 && toColumn > -1){     // Move happened on the chessboard (8x8)
+                    val move = listOf<Int>(fromRow, fromColumn, toRow, toColumn)
+
+                    updatedMoves.add(move)
+                    Log.d("Record", "Move ${currentBoardState.currentMove + 1} added: $fromRow-$fromColumn to $toRow-$toColumn")
+
+                    // Confirm to chessboard we are still recording:
+                    bluetoothManager.sendDataToDevice("r\n")
+                    Log.d("Recording", "r sent to bluetooth")
+
+                    // Update the UI state with the new moves list
+                    _chessBoardUiState.value = currentBoardState.copy(moves = updatedMoves, currentMove = currentBoardState.currentMove + 1)
+                    movePiece(fromRow, fromColumn, toRow, toColumn)
+
+                } else{     // Piece was moved outside the 8x8
+                    val capturedPiece = currentBoardState.piecesState[fromRow][fromColumn]
+                    val captureMoveIndex = currentBoardState.currentMove + 1 // Capture is part of last executed move + 1
+                    val capture = Pair<Int, String>(captureMoveIndex, capturedPiece)
+
+                    val updatedCaptures = currentBoardState.captures.toMutableList()
+                    updatedCaptures.add(capture)
+
+                    Log.d("Record", "Capture of piece added at move: ${captureMoveIndex}, for piece ${capturedPiece}")
+                    // Update the UI state with the captured Piece
+                    _chessBoardUiState.value = currentBoardState.copy(captures = updatedCaptures)
+
+                    // Confirm to chessboard we are still recording:
+                    bluetoothManager.sendDataToDevice("r\n")
+                    Log.d("Recording", "r sent to bluetooth")
+
+                    movePiece(fromRow, fromColumn, toRow, toColumn)
+                }
+            }
         }
     }
+
+    // Executes current move
+    fun moveForward(){
+        val currentBoardState = _chessBoardUiState.value
+        val currentMove = currentBoardState.currentMove
+        val movesList = currentBoardState.moves
+
+        // Execute a forward move
+        if (currentMove < movesList.size) {
+            val toExecute = movesList[currentMove]
+            Log.d("movesNavigation", "Attempting move ${currentMove + 1}: ${toExecute[0]}, ${toExecute[1]}, ${toExecute[2]}, ${toExecute[3]}")
+            movePiece(toExecute[0], toExecute[1], toExecute[2], toExecute[3])
+            _chessBoardUiState.value = _chessBoardUiState.value.copy(currentMove = currentBoardState.currentMove + 1)
+        }
+    }
+
+    // Executes previous move
+    fun moveBack() {
+        val currentBoardState = _chessBoardUiState.value
+        val currentMove = currentBoardState.currentMove
+        val movesList = currentBoardState.moves
+        val captures = currentBoardState.captures
+
+        if (currentMove > 0) {
+            // Execute the reverse of the move
+            val toExecute = movesList[currentMove - 1]
+            Log.d("movesNavigation", "Attempting move ${currentMove}: ${toExecute[0]}, ${toExecute[1]}, ${toExecute[2]}, ${toExecute[3]}")
+            movePiece(toExecute[2], toExecute[3], toExecute[0], toExecute[1])
+
+
+            val newPiecesState = _chessBoardUiState.value.piecesState.map { it.toMutableList() }.toMutableList() // Mutable copy of piecesState
+            // Check if we had a capture in this move so we "revive" the piece that was captured
+            val capture = captures.find { it.first == currentMove }
+            capture?.let {
+                val capturedPiece = it.second
+                // add to the copy of piecesState matrix the revived piece
+                newPiecesState[toExecute[2]][toExecute[3]] = capturedPiece
+            }
+
+            // Update the chess board state
+            _chessBoardUiState.value = _chessBoardUiState.value.copy(
+                currentMove = currentMove - 1,
+                piecesState = newPiecesState
+            )
+        }
+    }
+
+    // Function used to save moves
+    fun saveMovesToFile(context: Context, filename: String) {
+        // Define the folder for recordings
+        val recordingsFolder = File(context.filesDir, "recordings")
+
+        // Create the folder if it doesn't exist
+        if (!recordingsFolder.exists()) {
+            recordingsFolder.mkdir()
+        }
+
+        // Save all moves and captures from ChessBoardState to a file
+        val filename = "$filename.txt"
+        val file = File(recordingsFolder, filename)
+        file.printWriter().use { out ->
+            _chessBoardUiState.value.moves.forEach { move ->
+                out.println(move.joinToString(","))
+                Log.d("Recording", "Move Saved to $filename: ${move.joinToString(",")}")
+            }
+            // Write a separator line
+            out.println("===")
+            Log.d("Recording", "Separator Saved to $filename")
+            _chessBoardUiState.value.captures.forEach { capture ->
+                out.println("${capture.first},${capture.second}")
+                Log.d("Recording", "Capture Saved to $filename: ${capture.first},${capture.second}")
+            }
+        }
+    }
+
+    fun getAllRecordingFiles(context: Context): List<File> {
+        val recordingsFolder = File(context.filesDir, "recordings")
+        if (!recordingsFolder.exists()) {
+            return emptyList()
+        }
+        return recordingsFolder.listFiles()?.toList() ?: emptyList()
+    }
+
+    // Function to load moves from a file
+    fun loadMovesFromFile(filename: String) {
+        Log.d("FileLoad", "loadMovesFromFile called for file: $filename")
+        val file = File(filename)
+
+        if (file.exists()) {
+            Log.d("FileLoad", "File Exists")
+
+            // Read and log all lines for debug purposes
+            val fileContent = file.readText()
+            Log.d("FileLoad", "File Content:\n$fileContent")
+
+            val lines = file.readLines()
+            val separatorIndex = lines.indexOf("===")
+
+            // Parse moves
+            val loadedMoves = lines.take(separatorIndex).map { line ->
+                line.split(",").map { it.toInt() }
+            }
+
+            // Parse captures
+            val loadedCaptures = lines.drop(separatorIndex + 1).map { line ->
+                val (moveIndex, piece) = line.split(",")
+                moveIndex.toInt() to piece
+            }
+
+            // Logs for debug only
+            loadedMoves.forEachIndexed { index, move ->
+                val (fromRow, fromColumn, toRow, toColumn) = move
+                Log.d("FileLoad", "Move ${index + 1}: $fromRow-$fromColumn to $toRow-$toColumn")
+            }
+
+            loadedCaptures.forEachIndexed { index, capture ->
+                val (moveIndex, piece) = capture
+                Log.d("FileLoad", "Capture ${index + 1}: MoveIndex=$moveIndex, Piece=$piece")
+            }
+
+            // Reset board
+            resetBoard()
+
+            // Update ChessBoardState with the moves and captures list
+            _chessBoardUiState.value = _chessBoardUiState.value.copy(
+                moves = loadedMoves.toMutableList(),
+                captures = loadedCaptures.toMutableList(),
+                watchRecording = true
+            )
+        } else {
+            Log.d("FileLoad", "File does not exist")
+        }
+    }
+
+    fun deleteFile(fileName: String):Boolean {
+        val file = File(fileName)
+        return try {
+            if (file.exists()) {
+                file.delete()
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
 
     // Function that resets clicked square markings
     private fun resetClickedSquare(){

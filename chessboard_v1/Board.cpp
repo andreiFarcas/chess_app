@@ -105,7 +105,7 @@ void Board::processDetection(int row, int column){
     char piece = state[liftedPiece[0]][liftedPiece[1]];
 
     // Check if we have moved a black piece, we are in process of making a capture so we do not send that to bluetooth yet
-    if (piece == 'B' || piece == 'K' || piece == 'R' || piece == 'P' || piece == 'Q' || piece == 'N') {
+    if ((piece == 'B' || piece == 'K' || piece == 'R' || piece == 'P' || piece == 'Q' || piece == 'N') && (turn != 2)) {
       move(liftedPiece[0], liftedPiece[1], row, column); // Updates the board state
     }else{
       move(liftedPiece[0], liftedPiece[1], row, column); // Updates the board state
@@ -117,7 +117,8 @@ void Board::processDetection(int row, int column){
       Serial3.println(dataToSend);
 
       // Signals its Stockfish turn
-      turn = 0;
+      if(turn == 1)
+        turn = 0;
 
       // Print the data to Serial for debugging
       Serial.println("Sent to Bluetooth: " + dataToSend);
@@ -127,6 +128,7 @@ void Board::processDetection(int row, int column){
 
 // Reads all sensors and detects any intervention on the pieces
 void Board::readPiecePresence(){
+  Serial.println("readpiecepresence() called");
   // Read sequentially 6 squares at a time
   for(int i = 0; i < 16; i++){
     // Converts the value of i to binary and sends each bit to mux on pins S0, S1, S2 and S3
