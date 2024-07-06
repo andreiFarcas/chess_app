@@ -74,7 +74,7 @@ fun RecordMatchScreen(
             piecesState = boardState.piecesState,
             possibleMoves = boardState.possibleMoves,
             clickedSquare = boardState.clickedSquare,
-            bKingInCheck = boardState.bKingInCheck
+            bKingInCheck = boardState.bKingInCheck,
         )
 
         // Start and Stop Recording buttons

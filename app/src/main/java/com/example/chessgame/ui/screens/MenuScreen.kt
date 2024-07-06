@@ -2,16 +2,29 @@ package com.example.chessgame.ui.screens
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandIn
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkOut
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -19,6 +32,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
@@ -36,6 +51,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavController
 import com.example.chessgame.interfaces.BluetoothManager
 
@@ -107,7 +123,8 @@ fun MenuOptions(
     modifier: Modifier
 ){
     Column(
-        modifier = modifier,
+        modifier = Modifier
+            .fillMaxHeight(),
         verticalArrangement = Arrangement.SpaceBetween // Ensures space between the elements of the menu
     ){
         MainMenuDropDown(
@@ -135,6 +152,15 @@ fun MenuOptions(
         MainMenuButton(
             labelResource = "About",
             onClick = onAboutButtonClicked
+        )
+        Spacer(modifier = Modifier.height(46.dp))
+        Image(
+            painter = painterResource(id = R.drawable.utcn_logo),
+            contentDescription = "UTCN logo",
+            modifier = Modifier
+                .size(90.dp) // Adjust the size as needed
+                .align(Alignment.CenterHorizontally) // Center the image horizontally
+                .padding(bottom = dimensionResource(id = R.dimen.padding_small)) // Add padding if necessary
         )
     }
 }
@@ -270,8 +296,8 @@ fun MainMenuDropDown(
     labelResource: String,
     onClick: (String) -> Unit,
     modifier: Modifier = Modifier
-){
-    val expandedButton = remember{mutableStateOf(false)}
+) {
+    val expandedButton = remember { mutableStateOf(false) }
     val selectedDifficulty = remember { mutableStateOf("Select Difficulty") } // Tracks the selected difficulty
     val selectedColor = remember { mutableStateOf("Select Color") }
 
@@ -294,8 +320,7 @@ fun MainMenuDropDown(
         modifier = modifier,
         colors = cardColors,
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    )
-    {
+    ) {
         Button(
             onClick = { expandedButton.value = !expandedButton.value },
             modifier = modifier
@@ -305,23 +330,37 @@ fun MainMenuDropDown(
                     end = dimensionResource(R.dimen.padding_large)
                 )
         ) {
-            Text(text = labelResource)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = labelResource, modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
+                Icon(
+                    imageVector = if (expandedButton.value) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                    contentDescription = if (expandedButton.value) "Open" else "Close menu"
+                )
+            }
         }
-        if(expandedButton.value){
-            SelectDifficulty(selectedDifficulty, modifier)
-            SelectColor(selectedColor, modifier)
 
-            Button(
-                onClick = { onClick(selectedDifficulty.value) },
-                modifier = modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(
-                        start = dimensionResource(R.dimen.padding_large),
-                        end = dimensionResource(R.dimen.padding_large)
-                    ),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-            ){
-                Text("Start")
+        // Annimated play button that is expandable based on expandedButton
+        AnimatedVisibility(
+            visible = expandedButton.value,
+            enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(),
+            exit = shrinkOut(shrinkTowards = Alignment.TopStart) + fadeOut()
+        ) {
+            Column {
+                SelectDifficulty(selectedDifficulty, modifier)
+                SelectColor(selectedColor, modifier)
+
+                Button(
+                    onClick = { onClick(selectedDifficulty.value) },
+                    modifier = modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(
+                            start = dimensionResource(R.dimen.padding_large),
+                            end = dimensionResource(R.dimen.padding_large)
+                        ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
+                ) {
+                    Text("Start")
+                }
             }
         }
     }
@@ -344,7 +383,7 @@ fun SelectColor(selectedColor: MutableState<String>, modifier: Modifier){
                 end = dimensionResource(id = R.dimen.padding_small)
             )
         )
-        Button(
+        FilledTonalButton(
             onClick = { expanded.value = true },
             modifier = modifier
                 .fillMaxWidth()
@@ -402,7 +441,7 @@ fun SelectDifficulty(selectedDifficulty: MutableState<String>, modifier: Modifie
                 end = dimensionResource(id = R.dimen.padding_small)
             )
         )
-        Button(
+        FilledTonalButton(
             onClick = { expanded.value = true },
             modifier = modifier
                 .fillMaxWidth()
@@ -436,6 +475,13 @@ fun SelectDifficulty(selectedDifficulty: MutableState<String>, modifier: Modifie
                 text = { Text("Hard") },
                 onClick = {
                     selectedDifficulty.value = "Hard"
+                    expanded.value = false
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("Professional") },
+                onClick = {
+                    selectedDifficulty.value = "Professional"
                     expanded.value = false
                 }
             )

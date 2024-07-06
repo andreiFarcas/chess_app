@@ -108,7 +108,7 @@ fun WatchRecordingScreen(
             piecesState = boardState.piecesState,
             possibleMoves = boardState.possibleMoves,
             clickedSquare = boardState.clickedSquare,
-            bKingInCheck = boardState.bKingInCheck
+            bKingInCheck = boardState.bKingInCheck,
         )
         Row(
             modifier = Modifier.align(Alignment.CenterHorizontally)

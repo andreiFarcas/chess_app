@@ -2,17 +2,31 @@ package com.example.chessgame.ui.screens
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chessgame.R
 import com.example.chessgame.ui.ChessGameViewModel
@@ -46,42 +60,60 @@ fun PlayScreen(
 
     Column {
         Text(
-            text = "\nMove counter: ${boardState.moveCounter}"
+            text = "\nMove counter: ${boardState.moveCounter}",
+            modifier = Modifier.padding(dimensionResource(id = R.dimen.padding_small))
         )
         Text(
-            text = "Stockfish level: ${boardState.difficultyStockfish}"
+            text = "Stockfish level: ${boardState.difficultyStockfish}",
+            modifier = Modifier.padding(dimensionResource(id = R.dimen.padding_small))
         )
         ChessBoardUi(
             chessGameViewModel = chessGameViewModel,
             piecesState = boardState.piecesState,
             possibleMoves = boardState.possibleMoves,
             clickedSquare = boardState.clickedSquare,
-            bKingInCheck = boardState.bKingInCheck
+            bKingInCheck = boardState.bKingInCheck,
         )
-        Button(onClick = {chessGameViewModel.resetBoard() }) {
-            Text(text = "Reset Board")
+        Button(
+            onClick = {chessGameViewModel.resetBoard() },
+            modifier = Modifier.padding(dimensionResource(id = R.dimen.padding_small))
+        ) {
+            Text(text = "Reset Game")
         }
-        Text(
-            text = "\n FEN code for position:\n ${chessGameViewModel.testFenInterface()}\n",
-            fontSize = 10.sp
-        )
+        Spacer(modifier = Modifier.height(20.dp))
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(dimensionResource(id = R.dimen.padding_small))
+                .clip(RoundedCornerShape(8.dp)),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                Text(
+                    text = "\n FEN code for position:\n ${chessGameViewModel.testFenInterface()}\n",
+                    fontSize = 10.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(dimensionResource(id = R.dimen.padding_small))
+                )
 
-        if(!chessGameViewModel.checkPlayVsStockfish()){
-            // Prints move suggestion from stockfish
-            val bestMoveText by chessGameViewModel.bestMoveText.collectAsState()
-            Text(
-                text = bestMoveText
-            )
-
-            Row {
-                Button(onClick = { chessGameViewModel.moveBack() }) {
-                    Text(text = "<")
-                }
-                Button(onClick = { chessGameViewModel.moveForward()} ) {
-                    Text(text = ">")
+                if (!chessGameViewModel.checkPlayVsStockfish()) {
+                    // Prints move suggestion from stockfish (Used on practice screen)
+                    val bestMoveText by chessGameViewModel.bestMoveText.collectAsState()
+                    Text(
+                        text = bestMoveText,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(dimensionResource(id = R.dimen.padding_small)),
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
         }
+
     }
 }
 

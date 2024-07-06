@@ -62,7 +62,7 @@ fun ChessGameApp(
             WatchRecordingScreen(context, chessGameViewModel)
         }
         composable(route = ChessGameScreen.Practice.name){
-            PlayScreen(chessGameViewModel, false, "Hard")
+            PlayScreen(chessGameViewModel, false, "Professional")
         }
         composable(route = ChessGameScreen.About.name){
             AboutScreen()

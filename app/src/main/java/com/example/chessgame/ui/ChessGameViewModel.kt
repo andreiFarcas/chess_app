@@ -49,7 +49,7 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
         return chessEngine.getFenFromChessBoardState(currentBoardState)
     }
 
-    private val _bestMoveText = MutableStateFlow("Waiting for Stockfish...")
+    private val _bestMoveText = MutableStateFlow("Waiting for Stockfish\n...")
     val bestMoveText: StateFlow<String> = _bestMoveText.asStateFlow() // Will be read in practice mode
 
     // Launches the chessEngine.getBestMove in a separate thread to avoid blocking the main thread
@@ -74,7 +74,7 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
                 "Easy" -> currentState.copy(difficultyStockfish = 1)
                 "Medium" -> currentState.copy(difficultyStockfish = 2)
                 "Hard" -> currentState.copy(difficultyStockfish = 3)
-                "Legend" -> currentState.copy(difficultyStockfish = 5)
+                "Professional" -> currentState.copy(difficultyStockfish = 5)
                 else -> currentState // No change if the difficulty string doesn't match
             }
         }
@@ -164,8 +164,6 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
     // Function that moves a piece from starting position to target position
     @RequiresApi(Build.VERSION_CODES.O)
     private fun movePiece(fromRow: Int, fromColumn: Int, toRow: Int, toColumn: Int) {
-
-        Log.d("BluetoothDebug", "movePiece Started for move: $fromRow, $fromColumn to $toRow, $toColumn")
 
         val currentBoardState = _chessBoardUiState.value
         val pieceToMove = currentBoardState.piecesState[fromRow][fromColumn] // String code of piece to move
