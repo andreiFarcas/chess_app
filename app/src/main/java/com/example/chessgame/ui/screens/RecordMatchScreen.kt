@@ -23,6 +23,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
@@ -34,8 +35,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.chessgame.ui.ChessGameViewModel
 import com.example.chessgame.ui.components.ChessBoardUi
+import com.example.chessgame.ui.components.TopBar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -46,7 +49,8 @@ import java.io.File
 fun RecordMatchScreen(
     context: Context,
     chessGameViewModel: ChessGameViewModel = viewModel(),
-){
+    navController: NavController,
+) {
     chessGameViewModel.setPlayVsStockfish(false) // Make sure Stockfish doesn't interfere with the game
 
     val boardState by chessGameViewModel.chessBoardUiState.collectAsState()
@@ -63,165 +67,169 @@ fun RecordMatchScreen(
         }
     }
 
-    Column {
-        Text(
-            text = "HINT: Place the pieces on initial position and press the start recording button!",
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(10.dp)
-        )
-        ChessBoardUi(
-            chessGameViewModel = chessGameViewModel,
-            piecesState = boardState.piecesState,
-            possibleMoves = boardState.possibleMoves,
-            clickedSquare = boardState.clickedSquare,
-            bKingInCheck = boardState.bKingInCheck,
-        )
-
-        // Start and Stop Recording buttons
-        Row(
-            modifier = Modifier
-                .padding(10.dp)
-                .fillMaxWidth()
+    Scaffold(
+        topBar = {
+            TopBar() {
+                navController.popBackStack()
+            }
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier.padding(innerPadding)
         ) {
-            Button(
-                onClick = { chessGameViewModel.startRecording() },
-                enabled = !isRecording,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Green,
-                    contentColor = Color.White
-                ),
+            Text(
+                text = "HINT: Place the pieces on initial position and press the start recording button!",
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(10.dp)
+            )
+            ChessBoardUi(
+                chessGameViewModel = chessGameViewModel,
+                piecesState = boardState.piecesState,
+                possibleMoves = boardState.possibleMoves,
+                clickedSquare = boardState.clickedSquare,
+                bKingInCheck = boardState.bKingInCheck,
+            )
+
+            // Start and Stop Recording buttons
+            Row(
                 modifier = Modifier
-                    //.alpha(if (!isRecording) 1f else 0.9f)
-                    .weight(0.485f)
+                    .padding(10.dp)
+                    .fillMaxWidth()
             ) {
-                Icon(
-                    imageVector = Icons.Default.PlayArrow,
-                    contentDescription = "Start Recording"
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "Start Recording")
-            }
-            Spacer(modifier = Modifier.weight(0.03f))
-            Button(
-                onClick = { showDialog = true },
-                enabled = isRecording,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Red,
-                    contentColor = Color.White
-                ),
-                modifier = Modifier
-                    //.alpha(if (isRecording) 1f else 0.9f)
-                    .weight(0.485f)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = "Stop Recording"
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "Stop Recording")
-            }
-        }
-        if(isRecording){
-            Text("Recorded Moves: ")
-            FlowRow(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                boardState.moves.forEachIndexed { index, move ->
-                    val moveText = try {
-                        chessGameViewModel.moveConversion(move, index+1)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        "Error converting move"
-                    }
-
-                    // Special formatting for current move
-                    val textColor = if (index == boardState.currentMove - 1) Color.Red else Color.Black
-
-                    Text(
-                        text = moveText,
-                        color = textColor
+                Button(
+                    onClick = { chessGameViewModel.startRecording() },
+                    enabled = !isRecording,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Green,
+                        contentColor = Color.White
+                    ),
+                    modifier = Modifier
+                        //.alpha(if (!isRecording) 1f else 0.9f)
+                        .weight(0.485f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = "Start Recording"
                     )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = "Start Recording")
+                }
+                Spacer(modifier = Modifier.weight(0.03f))
+                Button(
+                    onClick = { showDialog = true },
+                    enabled = isRecording,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Red,
+                        contentColor = Color.White
+                    ),
+                    modifier = Modifier
+                        //.alpha(if (isRecording) 1f else 0.9f)
+                        .weight(0.485f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = "Stop Recording"
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = "Stop Recording")
+                }
+            }
+            if (isRecording) {
+                Text("Recorded Moves: ")
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    boardState.moves.forEachIndexed { index, move ->
+                        val moveText = try {
+                            chessGameViewModel.moveConversion(move, index + 1)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            "Error converting move"
+                        }
 
-                    if (index < boardState.moves.size - 1) {
-                        Text(text = "; ")
+                        // Special formatting for current move
+                        val textColor =
+                            if (index == boardState.currentMove - 1) Color.Red else Color.Black
+
+                        Text(
+                            text = moveText,
+                            color = textColor
+                        )
+
+                        if (index < boardState.moves.size - 1) {
+                            Text(text = "; ")
+                        }
                     }
                 }
+                Text("Recorded Captures (move, piece):")
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(boardState.captures.toString())
+                }
             }
-            Text("Recorded Captures (move, piece):")
-            FlowRow(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(boardState.captures.toString())
-            }
+
         }
 
-    }
-
-    if (showDialog) {
-        AlertDialog(
-            onDismissRequest = { showDialog = false },
-            title = { Text(text = "Stop Recording") },
-            text = {
-                Column {
-                    Text(text = "Enter name for the recording:")
-                    TextField(
-                        value = recordingName,
-                        onValueChange = { recordingName = it }
-                    )
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                title = { Text(text = "Stop Recording") },
+                text = {
+                    Column {
+                        Text(text = "Enter name for the recording:")
+                        TextField(
+                            value = recordingName,
+                            onValueChange = { recordingName = it }
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(onClick = {
+                        chessGameViewModel.saveRecording(context, recordingName)
+                        showDialog = false
+                    }) {
+                        Text("Save Recording")
+                    }
+                },
+                dismissButton = {
+                    Button(onClick = {
+                        chessGameViewModel.resetRecording()
+                        showDialog = false
+                    }) {
+                        Text("Reset without saving")
+                    }
                 }
-            },
-            confirmButton = {
-                Button(onClick = {
-                    chessGameViewModel.saveRecording(context, recordingName)
-                    showDialog = false
-                }) {
-                    Text("Save Recording")
-                }
-            },
-            dismissButton = {
-                Button(onClick = {
-                    chessGameViewModel.resetRecording()
-                    showDialog = false
-                }) {
-                    Text("Reset without saving")
-                }
-            }
-        )
-    }
+            )
+        }
 
-    if (showFiles) {
-        val recordedFiles = chessGameViewModel.getAllRecordingFiles(context)
+        if (showFiles) {
+            val recordedFiles = chessGameViewModel.getAllRecordingFiles(context)
 
-        Column {
-            Text("Select a recorded game:")
-            Spacer(modifier = Modifier.height(8.dp))
+            Column {
+                Text("Select a recorded game:")
+                Spacer(modifier = Modifier.height(8.dp))
 
-            if (recordedFiles.isEmpty()) {
-                Text("No recorded games found.")
-            } else {
-                LazyColumn {
-                    items(recordedFiles) { file ->
-                        Button(
-                            onClick = {
-                                selectedFile = file
-                                showFiles = false // Close the file selection view
-                                // Call function to load moves from selected file
-                                chessGameViewModel.loadMovesFromFile(file.toString())
-                            },
-                            modifier = Modifier.padding(8.dp)
-                        ) {
-                            Text(file.name)
+                if (recordedFiles.isEmpty()) {
+                    Text("No recorded games found.")
+                } else {
+                    LazyColumn {
+                        items(recordedFiles) { file ->
+                            Button(
+                                onClick = {
+                                    selectedFile = file
+                                    showFiles = false // Close the file selection view
+                                    // Call function to load moves from selected file
+                                    chessGameViewModel.loadMovesFromFile(file.toString())
+                                },
+                                modifier = Modifier.padding(8.dp)
+                            ) {
+                                Text(file.name)
+                            }
                         }
                     }
                 }
             }
         }
     }
-}
-
-@RequiresApi(Build.VERSION_CODES.O)
-@Preview(showBackground = true)
-@Composable
-fun RecordMatchScreen(){
-    PuzzlesScreen()
 }

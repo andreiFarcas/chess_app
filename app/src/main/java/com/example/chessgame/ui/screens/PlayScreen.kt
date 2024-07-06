@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,9 +29,11 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.chessgame.R
 import com.example.chessgame.ui.ChessGameViewModel
 import com.example.chessgame.ui.components.ChessBoardUi
+import com.example.chessgame.ui.components.TopBar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -45,6 +48,7 @@ fun PlayScreen(
     chessGameViewModel: ChessGameViewModel,
     playVsStockfish: Boolean,
     difficultyLevelStockfish: String,
+    navController: NavController,
 ){
     val boardState by chessGameViewModel.chessBoardUiState.collectAsState()
 
@@ -58,62 +62,72 @@ fun PlayScreen(
         }
     }
 
-    Column {
-        Text(
-            text = "\nMove counter: ${boardState.moveCounter}",
-            modifier = Modifier.padding(dimensionResource(id = R.dimen.padding_small))
-        )
-        Text(
-            text = "Stockfish level: ${boardState.difficultyStockfish}",
-            modifier = Modifier.padding(dimensionResource(id = R.dimen.padding_small))
-        )
-        ChessBoardUi(
-            chessGameViewModel = chessGameViewModel,
-            piecesState = boardState.piecesState,
-            possibleMoves = boardState.possibleMoves,
-            clickedSquare = boardState.clickedSquare,
-            bKingInCheck = boardState.bKingInCheck,
-        )
-        Button(
-            onClick = {chessGameViewModel.resetBoard() },
-            modifier = Modifier.padding(dimensionResource(id = R.dimen.padding_small))
-        ) {
-            Text(text = "Reset Game")
-        }
-        Spacer(modifier = Modifier.height(20.dp))
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(dimensionResource(id = R.dimen.padding_small))
-                .clip(RoundedCornerShape(8.dp)),
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                Text(
-                    text = "\n FEN code for position:\n ${chessGameViewModel.testFenInterface()}\n",
-                    fontSize = 10.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(dimensionResource(id = R.dimen.padding_small))
-                )
-
-                if (!chessGameViewModel.checkPlayVsStockfish()) {
-                    // Prints move suggestion from stockfish (Used on practice screen)
-                    val bestMoveText by chessGameViewModel.bestMoveText.collectAsState()
-                    Text(
-                        text = bestMoveText,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(dimensionResource(id = R.dimen.padding_small)),
-                        textAlign = TextAlign.Center
-                    )
-                }
+    Scaffold(
+        topBar = {
+            TopBar() {
+                navController.popBackStack()
             }
         }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier.padding(innerPadding)
+        ){
+            Text(
+                text = "\nMove counter: ${boardState.moveCounter}",
+                modifier = Modifier.padding(dimensionResource(id = R.dimen.padding_small))
+            )
+            Text(
+                text = "Stockfish level: ${boardState.difficultyStockfish}",
+                modifier = Modifier.padding(dimensionResource(id = R.dimen.padding_small))
+            )
+            ChessBoardUi(
+                chessGameViewModel = chessGameViewModel,
+                piecesState = boardState.piecesState,
+                possibleMoves = boardState.possibleMoves,
+                clickedSquare = boardState.clickedSquare,
+                bKingInCheck = boardState.bKingInCheck,
+            )
+            Button(
+                onClick = {chessGameViewModel.resetBoard() },
+                modifier = Modifier.padding(dimensionResource(id = R.dimen.padding_small))
+            ) {
+                Text(text = "Reset Game")
+            }
+            Spacer(modifier = Modifier.height(20.dp))
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(dimensionResource(id = R.dimen.padding_small))
+                    .clip(RoundedCornerShape(8.dp)),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    Text(
+                        text = "\n FEN code for position:\n ${chessGameViewModel.testFenInterface()}\n",
+                        fontSize = 10.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(dimensionResource(id = R.dimen.padding_small))
+                    )
 
+                    if (!chessGameViewModel.checkPlayVsStockfish()) {
+                        // Prints move suggestion from stockfish (Used on practice screen)
+                        val bestMoveText by chessGameViewModel.bestMoveText.collectAsState()
+                        Text(
+                            text = bestMoveText,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(dimensionResource(id = R.dimen.padding_small)),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+
+        }
     }
 }
 

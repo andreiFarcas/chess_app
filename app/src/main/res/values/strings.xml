@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Chess Game</string>
+    <string name="top_app_bar">Automated Chessboard</string>
 </resources>

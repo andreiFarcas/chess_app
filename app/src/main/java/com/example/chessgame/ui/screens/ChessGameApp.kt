@@ -50,22 +50,22 @@ fun ChessGameApp(
         }
         composable(route = ChessGameScreen.Play.name + "/{difficulty}") { backStackEntry ->
             val difficulty = backStackEntry.arguments?.getString("difficulty") ?: "Easy" // Default to "Easy" if not specified
-            PlayScreen(chessGameViewModel, true, difficulty)
+            PlayScreen(chessGameViewModel, true, difficulty, navController)
         }
         composable(route = ChessGameScreen.Puzzles.name){
-            PuzzlesScreen(chessGameViewModel)
+            PuzzlesScreen(chessGameViewModel, navController)
         }
         composable(route = ChessGameScreen.Record.name){
-            RecordMatchScreen(context, chessGameViewModel)
+            RecordMatchScreen(context, chessGameViewModel, navController)
         }
         composable(route = ChessGameScreen.Watch.name){
-            WatchRecordingScreen(context, chessGameViewModel)
+            WatchRecordingScreen(context, chessGameViewModel, navController)
         }
         composable(route = ChessGameScreen.Practice.name){
-            PlayScreen(chessGameViewModel, false, "Professional")
+            PlayScreen(chessGameViewModel, false, "Professional", navController)
         }
         composable(route = ChessGameScreen.About.name){
-            AboutScreen()
+            AboutScreen(navController)
         }
     }
 }
