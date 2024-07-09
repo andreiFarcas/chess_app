@@ -64,7 +64,7 @@ fun ChessBoardUi(
                         if(j == 7)
                             number = '0' + (8 - i)
 
-                        val squareColor = if(isGreenSquare) Color.Green else Color.Gray
+                        val squareColor = if(isGreenSquare) Color(0xFFbae5a7) else Color(0xFF8d9288)
 
                         // We check what piece we have on that square
                         val piece: String = piecesState[i][j]

@@ -36,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -145,6 +146,7 @@ fun WatchRecordingScreen(
                 } else {
                     Column {
                         FlowRow(modifier = Modifier.fillMaxWidth()) {
+                            Text(text = "Moves List: ", fontWeight = FontWeight.Bold)
                             boardState.moves.forEachIndexed { index, move ->
                                 val moveText = try {
                                     chessGameViewModel.moveConversion(move, index + 1)
@@ -168,7 +170,7 @@ fun WatchRecordingScreen(
                             }
                         }
                         FlowRow(modifier = Modifier.fillMaxWidth()) {
-                            Text("Captures (move, piece):")
+                            Text("Captures (move, piece):", fontWeight = FontWeight.Bold)
                             Text(boardState.captures.toString())
                         }
                     }

@@ -330,11 +330,15 @@ fun MainMenuDropDown(
                     end = dimensionResource(R.dimen.padding_large)
                 )
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = labelResource, modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = labelResource, textAlign = TextAlign.Center,
+                    modifier = Modifier.align(Alignment.Center),
+                )
                 Icon(
                     imageVector = if (expandedButton.value) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                    contentDescription = if (expandedButton.value) "Open" else "Close menu"
+                    contentDescription = if (expandedButton.value) "Open play menu" else "Close play menu",
+                    modifier = Modifier.align(Alignment.CenterEnd)
                 )
             }
         }

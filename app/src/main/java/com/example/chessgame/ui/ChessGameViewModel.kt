@@ -41,6 +41,9 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
         if(currentState.playVsStockfish != boolValue){
             _chessBoardUiState.value = currentState.copy(playVsStockfish = boolValue)
         }
+        if(boolValue){
+            bluetoothManager.sendDataToDevice("s\n") // resstarts the board state and places Arduino intor turn = 1
+        }
     }
 
     fun testFenInterface(): String {
@@ -81,28 +84,34 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
     }
 
     fun moveByStockfish() {
-        // Get the current board state and FEN representation
-        val currentBoardState = _chessBoardUiState.value
-        val fen = chessEngine.getFenFromChessBoardState(currentBoardState)
-        Log.d("BluetoothDebug", "moveByStockfish called")
+        viewModelScope.launch {
+            // Perform the move calculation on a background thread
+            withContext(Dispatchers.IO) {
+                // Get the current board state and FEN representation
+                val currentBoardState = _chessBoardUiState.value
+                val fen = chessEngine.getFenFromChessBoardState(currentBoardState)
+                Log.d("BluetoothDebug", "moveByStockfish called")
 
-        // Perform the move calculation directly (this will block the main thread)
-        val bestMove: String? = chessEngine.getBestMove(fen, currentBoardState.difficultyStockfish)
-        Log.d("BluetoothDebug", "bestMove computed")
+                // Perform the move calculation directly (this will block the main thread)
+                val bestMove: String? = chessEngine.getBestMove(fen, currentBoardState.difficultyStockfish)
+                Log.d("BluetoothDebug", "bestMove computed")
 
-        bestMove?.let {
-            // Convert from letter representation to normal square indexes
-            val initialSquare = Pair(8 - it[1].digitToInt(), letterToNumber(it[0]))
-            val targetSquare = Pair(8 - it[3].digitToInt(), letterToNumber(it[2]))
+                bestMove?.let {
+                    // Convert from letter representation to normal square indexes
+                    val initialSquare = Pair(8 - it[1].digitToInt(), letterToNumber(it[0]))
+                    val targetSquare = Pair(8 - it[3].digitToInt(), letterToNumber(it[2]))
 
-            // Also send Stockfish moves to Bluetooth
-            sendMoveToBluetooth(initialSquare.first, initialSquare.second, targetSquare.first, targetSquare.second)
-            Log.d("BluetoothDebug", "Move sent to bluetooth")
+                    // Also send Stockfish moves to Bluetooth
+                    sendMoveToBluetooth(initialSquare.first, initialSquare.second, targetSquare.first, targetSquare.second)
+                    Log.d("BluetoothDebug", "Move sent to bluetooth")
 
-            // Update the UI directly (this will also block the main thread)
-            movePiece(initialSquare.first, initialSquare.second, targetSquare.first, targetSquare.second)
-            Log.d("BluetoothDebug", "UI updated")
+                    // Update the UI directly (this will also block the main thread)
+                    movePiece(initialSquare.first, initialSquare.second, targetSquare.first, targetSquare.second)
+                    Log.d("BluetoothDebug", "UI updated")
+                }
+            }
         }
+
     }
 
     // Used to covert a move like e2e4 to regular indexes
@@ -269,8 +278,8 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
 
     // Updates the gameRecording status
     fun startRecording(){
-        resetBoard()
-
+        bluetoothManager.sendDataToDevice("s\n")
+        _chessBoardUiState.update { ChessBoardState(playVsStockfish = false) }   // Rebuilds the board state
         val currentBoardState = _chessBoardUiState.value
         // Send start Recording Mode to the board
         _chessBoardUiState.value = currentBoardState.copy(recordingGame = true, moves = mutableListOf())
@@ -320,7 +329,7 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
                 // Create a copy of the current moves list and add the new move
                 val updatedMoves = currentBoardState.moves.toMutableList()
 
-                if(toColumn < 7 && toColumn > -1){     // Move happened on the chessboard (8x8)
+                if(toColumn < 8 && toColumn > -1){     // Move happened on the chessboard (8x8)
                     val move = listOf<Int>(fromRow, fromColumn, toRow, toColumn)
 
                     updatedMoves.add(move)
@@ -407,7 +416,7 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
         // Define the folder for recordings
         val recordingsFolder = File(context.filesDir, "recordings")
 
-        // Create the folder if it doesn't exist
+        // Create the folder if it doesn't exist - for first time saving only
         if (!recordingsFolder.exists()) {
             recordingsFolder.mkdir()
         }

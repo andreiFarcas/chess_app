@@ -29,16 +29,15 @@ void setup()
 
   coreXY.initialize();
 
-  turn = 1; // First move made by human
+  turn = 0; // First move made by human
 }
 
 void loop()
 { 
-  Serial.println("Main loop called.");
   if(turn == 2){
     Serial.println("turn == 2");
     board.readPiecePresence(); // Wait for move from human and send it to app
-    interface.readData(); // In case we recieve s we know that we must leave the game mode and reset the board
+    interface.readData(); // In case we recieve s we know that we must leave the game mode and reset the board, if we recieve r, we keep recording
   } else if(turn == 1){
     Serial.println("turn 1");
     // Human moves
@@ -49,9 +48,12 @@ void loop()
     interface.readData(); // Reads data from serial communication via app and makes the right action based on recieved info
   }
 
-  delay(1000);
+  delay(100);
 }
 
+
+
+// ----------   ONLY USED DURING DEVELOPMENT   ----------
 void readInput(){
   // Reads input data
   static String inputString = ""; // Holds incoming data

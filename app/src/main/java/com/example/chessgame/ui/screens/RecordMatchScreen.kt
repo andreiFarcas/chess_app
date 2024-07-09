@@ -2,6 +2,7 @@ package com.example.chessgame.ui.screens
 
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -31,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -60,10 +62,16 @@ fun RecordMatchScreen(
     var showFiles by remember { mutableStateOf(false) }
     var selectedFile: File? by remember { mutableStateOf(null) }
     val isRecording = boardState.recordingGame
+    val wasRecording by remember {
+        mutableStateOf(isRecording)
+    }
 
     LaunchedEffect(isRecording) {
-        withContext(Dispatchers.IO) {
-            chessGameViewModel.moveFromChessboard()
+        if(isRecording && !wasRecording){
+            withContext(Dispatchers.IO) {
+                Log.d("Recording", "moveFromChessboard called on isRecording changed value form recordingScreen")
+                chessGameViewModel.moveFromChessboard()
+            }
         }
     }
 
@@ -100,7 +108,7 @@ fun RecordMatchScreen(
                     onClick = { chessGameViewModel.startRecording() },
                     enabled = !isRecording,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Green,
+                        containerColor = Color(0xFF6aa84f),
                         contentColor = Color.White
                     ),
                     modifier = Modifier
@@ -119,7 +127,7 @@ fun RecordMatchScreen(
                     onClick = { showDialog = true },
                     enabled = isRecording,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Red,
+                        containerColor = Color(0xFFb01d1d),
                         contentColor = Color.White
                     ),
                     modifier = Modifier
@@ -135,7 +143,7 @@ fun RecordMatchScreen(
                 }
             }
             if (isRecording) {
-                Text("Recorded Moves: ")
+                Text("Recorded Moves: ", fontWeight = FontWeight.Bold)
                 FlowRow(
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -161,7 +169,7 @@ fun RecordMatchScreen(
                         }
                     }
                 }
-                Text("Recorded Captures (move, piece):")
+                Text("Recorded Captures (move, piece): ", fontWeight = FontWeight.Bold)
                 FlowRow(
                     modifier = Modifier.fillMaxWidth()
                 ) {
