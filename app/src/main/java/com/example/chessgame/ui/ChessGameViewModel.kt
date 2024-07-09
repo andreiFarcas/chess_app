@@ -307,9 +307,11 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
 
     // Function that waits for data to be recieved from chessboard and executes the move
     fun moveFromChessboard(){
-        Log.d("Recording", "moveFromChessboard() called")
+        Log.d("bluetooth", "moveFromChessboard() called")
 
         val receivedMove = bluetoothManager.receiveDataFromDevice()
+
+        Log.d("bluetooth", "Recived move: $receivedMove")
 
         // Data received in format (fromRow, fromColumn, toRow, toColumn)
         val trimmedMessage = receivedMove.trim().split(" ")
@@ -325,7 +327,14 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
 
             Log.d("Record", "current flag: ${currentBoardState.recordingGame}")
 
-            if(currentBoardState.recordingGame == true){
+            if(currentBoardState.recordingGame == false){
+
+                // Try to filter false readings if it asks to move a piece from a empty position
+                if(currentBoardState.piecesState[fromRow][fromColumn] != "")
+                    movePiece(fromRow, fromColumn, toRow, toColumn)
+                else
+                    moveFromChessboard()
+            } else{    // we are recording
                 // Create a copy of the current moves list and add the new move
                 val updatedMoves = currentBoardState.moves.toMutableList()
 

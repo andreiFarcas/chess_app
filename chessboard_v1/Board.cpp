@@ -101,27 +101,27 @@ void Board::processDetection(int row, int column){
       liftedPiece[0] = row;
       liftedPiece[1] = column;
     } else if(presence[row][column] == 0){
-    // Intevrention was to place down a previously lifted piece (assume lifted piece exists in the memory)
-    char piece = state[liftedPiece[0]][liftedPiece[1]];
-
-    // Check if we have moved a black piece, we are in process of making a capture so we do not send that to bluetooth yet
-    if ((piece == 'B' || piece == 'K' || piece == 'R' || piece == 'P' || piece == 'Q' || piece == 'N') && (turn != 2)) {
-      move(liftedPiece[0], liftedPiece[1], row, column); // Updates the board state
-    }else{
-      move(liftedPiece[0], liftedPiece[1], row, column); // Updates the board state
-
-      // Sends the data to bluetooth 
-      String dataToSend = String(liftedPiece[0]) + " " + String(liftedPiece[1]) + " " + String(row) + " " + String(column);
+      // Intevrention was to place down a previously lifted piece (assumes lifted piece exists in the memory)
+      char piece = state[liftedPiece[0]][liftedPiece[1]];
   
-      // Send the string to the HC-05 via Serial3
-      Serial3.println(dataToSend);
-
-      // Signals its Stockfish turn
-      if(turn == 1)
-        turn = 0;
-
-      // Print the data to Serial for debugging
-      Serial.println("Sent to Bluetooth: " + dataToSend);
+      // Check if we have moved a black piece, we are in process of making a capture so we do not send that to bluetooth yet
+      if ((piece == 'B' || piece == 'K' || piece == 'R' || piece == 'P' || piece == 'Q' || piece == 'N') && (turn != 2)) {
+        move(liftedPiece[0], liftedPiece[1], row, column); // Updates the board state
+      }else{
+        move(liftedPiece[0], liftedPiece[1], row, column); // Updates the board state
+  
+        // Sends the data to bluetooth 
+        String dataToSend = String(liftedPiece[0]) + " " + String(liftedPiece[1]) + " " + String(row) + " " + String(column);
+    
+        // Send the string to the HC-05 via Serial3
+        Serial3.println(dataToSend);
+  
+        // Signals its Stockfish turn
+        if(turn == 1)
+          turn = 0;
+  
+        // Print the data to Serial for debugging
+        Serial.println("Sent to Bluetooth: " + dataToSend);
     }    
   }
 }
@@ -162,10 +162,10 @@ void Board::checkHumanIntervention(int row, int column, int muxNumber){
       // Human intervention detected
       // Added filtering to try and eliminate false readings and disturbances
       bool falseReading = false;
-      for(int k = 0; k < 3; k++){
+      for(int k = 0; k < 5; k++){
         if(presence[row][column] == !digitalRead(muxNumber))
           falseReading = true;
-        delay(100);
+        delay(50);
       }
 
       if(!falseReading){

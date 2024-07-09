@@ -27,7 +27,7 @@ void AppInterface::readData(){
 
 void AppInterface::processData(String inputString) {
   int offsetX = 5;  // offset on x position from "home" position to first square of the grave
-  int offsetY = 296; // max position on y coordinate
+  int offsetY = 293; // max position on y coordinate
 
   int toMove[4];
 
@@ -125,3 +125,23 @@ void AppInterface::processData(String inputString) {
       
   }
 }
+
+  // Ciobi  -  folosit cand suntem in turn 1 in caz ca user apasa pe reset game
+  void AppInterface::listenForReset(){
+    // Reads input data
+    static String inputString = ""; // Holds incoming data (static because we call this multiple times and don't want to reset it every time)
+
+    // Read incoming data until a newline is received
+    while (Serial3.available()) {
+      char inChar = (char)Serial3.read();
+
+      if (inChar == '\n') {
+        if(inputString == "s")
+          coreXY.returnToInitialPosition();
+          board.reset();
+        inputString = ""; // Reset the input string
+      } else {
+        inputString += inChar;
+      }
+    }
+  }

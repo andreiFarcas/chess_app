@@ -15,7 +15,8 @@ public:
   // More functions related to communication to be added here
   void readData();
   void processData(String inputString);
-
+  void listenForReset();
+  
 private:
   int tranzistorPIN;
 };
