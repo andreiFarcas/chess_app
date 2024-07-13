@@ -109,7 +109,20 @@ void Board::processDetection(int row, int column){
         move(liftedPiece[0], liftedPiece[1], row, column); // Updates the board state
       }else{
         move(liftedPiece[0], liftedPiece[1], row, column); // Updates the board state
-  
+
+        // Check if king has moved 2 squares, we are doing a castle move
+        if(piece == 'k'){
+          if(liftedPiece[1] - column == 2){
+            // Queen side castling
+            move(row, 2, row, 5); // Move the Queen side Rook in the board state
+            delay(2000); // Player has two seconds to complete the move
+          } else if(liftedPiece[1] - column == -2){
+            // King side castling
+            move(row, 9, row, 7); // Move the King side Rook in the board state
+            delay(2000); // Player has two seconds to complete the move
+          }
+        }
+
         // Sends the data to bluetooth 
         String dataToSend = String(liftedPiece[0]) + " " + String(liftedPiece[1]) + " " + String(row) + " " + String(column);
     

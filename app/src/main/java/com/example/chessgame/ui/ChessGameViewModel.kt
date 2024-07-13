@@ -177,24 +177,30 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
         val currentBoardState = _chessBoardUiState.value
         val pieceToMove = currentBoardState.piecesState[fromRow][fromColumn] // String code of piece to move
 
-        // Create a new List<List<>> with 8 elements but move the piece
-        val newPiecesState = mutableListOf<List<String>>()
+        // Create a new pieces state table in a copy
+        val newPiecesState = mutableListOf<MutableList<String>>()
+        for (row in currentBoardState.piecesState) {
+            newPiecesState.add(row.toMutableList())
+        }
 
-        for (i in currentBoardState.piecesState.indices) {
-            val newRow = mutableListOf<String>()
-            for (j in currentBoardState.piecesState[i].indices) {
-                if (i == toRow && j == toColumn) {
-                    // We are at the destination position -> we add the piece
-                    newRow.add(pieceToMove)
-                } else if (i == fromRow && j == fromColumn) {
-                    // We are at the initial position -> we remove the piece
-                    newRow.add("")
-                } else {
-                    // We don't need to modify anything -> just copy
-                    newRow.add(currentBoardState.piecesState[i][j])
-                }
+        // Move the piece to destination position
+        newPiecesState[toRow][toColumn] = pieceToMove
+        newPiecesState[fromRow][fromColumn] = ""
+
+        // Check if the move is castling
+        if ((pieceToMove == "wK" || pieceToMove == "bK") && (fromColumn == 4) && (fromRow == 0 || fromRow == 7)) {
+            if (fromColumn - toColumn == -2) {    // King Side castle
+                // move rook from column 7 to column 5
+                val rookToMove = newPiecesState[fromRow][7]
+                newPiecesState[fromRow][5] = rookToMove
+                newPiecesState[fromRow][7] = ""
             }
-            newPiecesState.add(newRow) // Add the row to the newPiecesState
+            if (fromColumn - toColumn == 2) {    // Queen Side castle
+                // move rook from column 0 to column 3
+                val rookToMove = newPiecesState[fromRow][0]
+                newPiecesState[fromRow][3] = rookToMove
+                newPiecesState[fromRow][0] = ""
+            }
         }
 
         val afterMoveBoardState = currentBoardState.copy(
@@ -242,12 +248,39 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
         if(!currentBoardState.whiteTurn)
             moveNumber += 1
 
+        // Update the flags for castling
+        var wKMoved = currentBoardState.wKMoved
+        var bKMoved = currentBoardState.bKMoved
+        var wKRookMoved = currentBoardState.wKRookMoved
+        var bKRookMoved = currentBoardState.bKRookMoved
+        var wQRookMoved = currentBoardState.wQRookMoved
+        var bQRookMoved = currentBoardState.bQRookMoved
+
+        when (pieceToMove) {
+            "wK" -> wKMoved = true
+            "bK" -> bKMoved = true
+            "wR" -> {
+                if (fromRow == 0 && fromColumn == 0) wQRookMoved = true // Queen-side rook
+                if (fromRow == 0 && fromColumn == 7) wKRookMoved = true // King-side rook
+            }
+            "bR" -> {
+                if (fromRow == 7 && fromColumn == 0) bQRookMoved = true // Queen-side rook
+                if (fromRow == 7 && fromColumn == 7) bKRookMoved = true // King-side rook
+            }
+        }
+
         val newBoardState = currentBoardState.copy(
             playVsStockfish = currentBoardState.playVsStockfish,
             piecesState = newPiecesState,
             whiteTurn = !currentBoardState.whiteTurn,
             //bKingInCheck = bKingInCheck,
-            moveCounter = moveNumber
+            moveCounter = moveNumber,
+            wKMoved = wKMoved,
+            bKMoved = bKMoved,
+            wKRookMoved = wKRookMoved,
+            bKRookMoved = bKRookMoved,
+            wQRookMoved = wQRookMoved,
+            bQRookMoved = bQRookMoved
         )
 
         // Update the ChessBoardState with the new board state
@@ -328,9 +361,8 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
             Log.d("Record", "current flag: ${currentBoardState.recordingGame}")
 
             if(currentBoardState.recordingGame == false){
-
                 // Try to filter false readings if it asks to move a piece from a empty position
-                if(currentBoardState.piecesState[fromRow][fromColumn] != "")
+                if(currentBoardState.piecesState[fromRow][fromColumn] != "" && (fromColumn in 0..7))
                     movePiece(fromRow, fromColumn, toRow, toColumn)
                 else
                     moveFromChessboard()
@@ -1143,6 +1175,24 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
                         }
                     }
                 }
+                // Check for castling possibilities if the king has not moved
+                if (!currentBoardState.wKMoved) {
+                    // Check king-side castling
+                    if (!currentBoardState.wKRookMoved) {
+                        // Check if squares between king and rook are empty and not under attack
+                        if (currentBoardState.piecesState[7][6] == "" && currentBoardState.piecesState[7][5] == "") {
+                            possibleMoves.add(Pair(7, 6))  // King-side castling move
+                        }
+                    }
+
+                    // Check queen-side castling
+                    if (!currentBoardState.bQRookMoved) {
+                        // Check if squares between king and rook are empty and not under attack
+                        if (currentBoardState.piecesState[7][1] == "" && currentBoardState.piecesState[7][2] == "" && currentBoardState.piecesState[7][3] == "") {
+                            possibleMoves.add(Pair(7, 2))  // Queen-side castling move
+                        }
+                    }
+                }
             }
 
             "bK" -> {
@@ -1157,6 +1207,25 @@ class ChessGameViewModel(private val chessEngine: ChessEngine, private val bluet
                             if (newRow in 0 until 8 && newCol in 0 until 8 && !currentBoardState.piecesState[newRow][newCol].contains("b")) {
                                 possibleMoves.add(Pair(newRow, newCol))
                             }
+                        }
+                    }
+                }
+
+                // Check for castling possibilities if the king has not moved
+                if (!currentBoardState.bKMoved) {
+                    // Check king-side castling
+                    if (!currentBoardState.bKRookMoved) {
+                        // Check if squares between king and rook are empty and not under attack
+                        if (currentBoardState.piecesState[0][6] == "" && currentBoardState.piecesState[0][5] == "") {
+                            possibleMoves.add(Pair(0, 6))  // King-side castling move
+                        }
+                    }
+
+                    // Check queen-side castling
+                    if (!currentBoardState.bQRookMoved) {
+                        // Check if squares between king and rook are empty and not under attack
+                        if (currentBoardState.piecesState[0][1] == "" && currentBoardState.piecesState[0][2] == "" && currentBoardState.piecesState[0][3] == "") {
+                            possibleMoves.add(Pair(0, 2))  // Queen-side castling move
                         }
                     }
                 }

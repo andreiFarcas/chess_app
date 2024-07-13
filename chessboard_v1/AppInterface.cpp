@@ -26,8 +26,8 @@ void AppInterface::readData(){
 }
 
 void AppInterface::processData(String inputString) {
-  int offsetX = 5;  // offset on x position from "home" position to first square of the grave
-  int offsetY = 293; // max position on y coordinate
+  int offsetX = 7;  // offset on x position from "home" position to first square of the grave
+  int offsetY = 296; // max position on y coordinate
 
   int toMove[4];
 
@@ -96,8 +96,8 @@ void AppInterface::processData(String inputString) {
         coreXY.moveTo(offsetX+80+40*toMove[3], offsetY-40*toMove[0] - 20);
         coreXY.moveTo(offsetX+80+40*toMove[3], offsetY-40*toMove[2]);
       }else if (toMove[0] - toMove[2] == 1) {
-        coreXY.moveTo(offsetX+80+40*toMove[1], offsetY-40*toMove[0] - 20);
-        coreXY.moveTo(offsetX+80+40*toMove[3], offsetY-40*toMove[0] - 20);
+        coreXY.moveTo(offsetX+80+40*toMove[1], offsetY-40*toMove[0] + 20);
+        coreXY.moveTo(offsetX+80+40*toMove[3], offsetY-40*toMove[0] + 20);
         coreXY.moveTo(offsetX+80+40*toMove[3], offsetY-40*toMove[2]);
       }else if (toMove[1] - toMove[3] == 1){
         coreXY.moveTo(offsetX+80+40*toMove[1] - 20, offsetY-40*toMove[0]);
@@ -109,8 +109,29 @@ void AppInterface::processData(String inputString) {
         coreXY.moveTo(offsetX+80+40*toMove[3], offsetY-40*toMove[2]);
       }
     }else{
-          // Piece is not a knight so we make simple, linear move
-          coreXY.moveTo(offsetX+80+40*toMove[3], offsetY-40*toMove[2]);
+      // Piece is not a knight so we make simple, linear move
+      coreXY.moveTo(offsetX+80+40*toMove[3], offsetY-40*toMove[2]);
+      digitalWrite(tranzistorPIN, LOW);
+      
+      // If move is a castling move, then we move the rook as well
+      if(board.state[toMove[0]][toMove[1]+2] == 'k' || board.state[toMove[0]][toMove[1]+2] == 'K'){
+      // We have a king, check if it is just a normal move or the type of castle
+        if(toMove[1] - toMove[3] == -2){
+          // King side castle
+          coreXY.moveTo(offsetX+80 + 40 * 0, offsetY-40*0); // Pick up the rook position
+          digitalWrite(tranzistorPIN, HIGH);
+          coreXY.moveTo(offsetX+80 + 40 * 0, offsetY-40*0 - 20);
+          coreXY.moveTo(offsetX+80 + 40 * 3, offsetY-40*0 - 20);
+          coreXY.moveTo(offsetX+80 + 40 * 3, offsetY-40*0);
+        }else if(toMove[1] - toMove[3] == 2){
+          // Queen side castle
+          coreXY.moveTo(offsetX+80+40 * 7, offsetY-40*0); // Pick up the rook position
+          digitalWrite(tranzistorPIN, HIGH);
+          coreXY.moveTo(offsetX+80+40 * 7, offsetY-40*0 - 20);
+          coreXY.moveTo(offsetX+80+40 * 5, offsetY-40*0 - 20);
+          coreXY.moveTo(offsetX+80+40 * 5, offsetY-40*0);
+        }
+      }
     }
 
     board.move(toMove[0], toMove[1]+2, toMove[2], toMove[3]+2);

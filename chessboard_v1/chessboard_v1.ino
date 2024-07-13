@@ -19,6 +19,8 @@ AppInterface interface = AppInterface(coreXY, board);
 
 const int tranzistorPIN = 8;
 
+int k;
+
 void setup()
 {
   pinMode(tranzistorPIN, OUTPUT);
@@ -30,6 +32,7 @@ void setup()
   coreXY.initialize();
 
   turn = 0; // First move made by human
+  int k;
 }
 
 void loop()
@@ -47,7 +50,6 @@ void loop()
     // Stockfish moves
     interface.readData(); // Reads data from serial communication via app and makes the right action based on recieved info
   }
-
   delay(100);
 }
 

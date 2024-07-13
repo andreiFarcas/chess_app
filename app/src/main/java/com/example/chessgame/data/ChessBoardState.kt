@@ -21,6 +21,14 @@ data class ChessBoardState (
     // true = white moves, false = black moves
     val whiteTurn: Boolean = true,
 
+    // Castling
+    val wKMoved:Boolean = false,
+    val wKRookMoved: Boolean = false,
+    val wQRookMoved: Boolean = false,
+    val bKMoved: Boolean = false,
+    val bKRookMoved: Boolean = false,
+    val bQRookMoved: Boolean = false,
+
     // Boolean keeping track of checks
     val wKingInCheck: Boolean = false,
     val bKingInCheck: Boolean = false,
