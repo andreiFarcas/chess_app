@@ -1,4 +1,5 @@
 This repository contains all the Software elements of the Robotized Chess Training System.
+
 For an overview of the project, go through the file: **Farcas_Andrei_documentation** (a .pdf containing the full documentation of the project)
 
 Other important directions:
